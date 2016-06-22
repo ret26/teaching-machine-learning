@@ -1,0 +1,572 @@
+\input{../../teaching}
+
+\newcommand{\foilhead}[1]{\end{frame} 
+\frametitle{#1}
+ \begin{frame}}
+\newcommand{\bea}{\begin{eqnarray*}}
+\newcommand{\eea}{\end{eqnarray*}}
+
+\begin{document}
+
+\titleslide{Lecture 6: Graphical Models: Learning}{February 6th, 2008}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Learning parameters}
+
+\vspace*{-3ex}
+\hspace{3ex} \includegraphics[width=0.7in]{dag07} \hspace{6ex} $P(x_1) P(x_2|x_1)
+P(x_3|x_1) P(x_4|x_2)$ \hspace{6ex} \includegraphics[width=1.1in]{cpt1} \\[1ex]
+
+Assume each variable $x_i$ is discrete and can take on $K_i$ values. \\[1ex]
+
+The parameters of this model can be represented as 4 tables:
+$\theta_1$ has $K_1$ entries, $\theta_2$ has $K_1 \times K_2$
+entries, etc. \\[1ex]
+
+These are called {\bf conditional probability tables} (CPTs) with the
+following semantics:
+\[
+P(x_1 = k) = \theta_{1,k} \hspace{4ex} P(x_2 = k' | x_1 = k) = \theta_{2,k,k'} 
+\]
+If node $i$ has $M$ parents, $\theta_i$ can be represented either as
+an $M+1$ dimensional table, or as a 2-dimensional table with $\left(\prod_{j
+  \in \mathrm{pa}(i)} K_j \right) \times K_i $ entries by collapsing all
+the states of the parents of node $i$. Note that $\sum_{k'}
+\theta_{i,k,k'} = 1$.\\[2ex] 
+
+Assume a data set $\D = \{ \bfx^{(n)} \}_{n=1}^N$. \hfill  \Red{\bf How
+  do we learn $\btheta$ from $\D$?}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Learning parameters}
+
+Assume a data set $\D = \{ \bfx^{(n)} \}_{n=1}^N$. How do we learn
+$\btheta$ from $\D$? 
+
+\vspace*{-7.5ex}
+
+\hspace{3ex} $P(\bfx|\btheta) = P(x_1|\theta_1) P(x_2|x_1,\theta_2)
+P(x_3|x_1,\theta_3) P(x_4|x_2,\theta_4) $ \hspace{8ex} \includegraphics[width=0.6in]{dag07}\\[1ex]
+
+
+Likelihood:
+\vspace*{-2ex}
+\[
+P(\D|\btheta) = \prod_{n=1}^N P(\bfx^{(n)}|\btheta) 
+\] \\[-2ex]
+Log Likelihood:
+\vspace*{-2ex}
+\[
+\log P(\D|\btheta) = \sum_{n=1}^N \sum_i \log P(x_i^{(n)}|x_{\mathrm{pa}(i)}^{(n)}, \theta_i)
+\]
+This decomposes into sum of functions of $\theta_i$. Each $\theta_i$ can be
+optimized separately:
+\vspace*{-2ex}
+\[
+\hat{\theta}_{i,k,k'} = \frac{n_{i,k,k'}}{\sum_{k''} n_{i,k,k''}}
+\] 
+\vspace*{-.5ex}
+where $n_{i,k,k'}$ is the number of times in $\D$ where $x_i=k'$ and
+$x_{\mathrm{pa}(i)} = k$. \\[1ex]
+
+ML  solution: \Red{Simply calculate frequencies!}
+\hfill \includegraphics[width=1.5in]{cpt2} 
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Maximum Likelihood Learning with Hidden Variables: \\ The EM
+  Algorithm} 
+
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=1in]{x1y1} & 
+\raisebox{0.4in}{
+\parbox{2.7in}{
+Assume a model parameterised by $\theta$ with observable variables $Y$
+and hidden variables $X$}}
+\end{tabular}
+}
+
+\vspace{2ex}
+
+{\bf Goal:} maximize parameter log likelihood given observed data. 
+\bea
+{\cal L}(\theta) = \log p(Y|\theta) = \log \sum_X p(Y,X|\theta)
+\eea
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Maximum Likelihood Learning with Hidden Variables: \\ The EM
+  Algorithm} 
+
+\vspace*{-2ex}
+{\bf Goal:} maximise parameter log likelihood given observables. 
+\bea
+{\cal L}(\theta) = \log p(Y|\theta) = \log \sum_X p(Y,X|\theta)
+\eea
+
+\Blue{The EM algorithm (intuition):} \\[2ex]
+
+Iterate between applying the following two steps:
+
+\begin{itemize}
+\item {\bf The E step:} fill-in the hidden/missing variables
+\item {\bf The M step:} apply complete data learning to filled-in data.
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Maximum Likelihood Learning with Hidden Variables: \\ The EM
+  Algorithm} 
+
+\vspace*{-1ex}
+{\bf Goal:} maximise parameter log likelihood given observables. 
+\bea
+{\cal L}(\theta) = \log p(Y|\theta) = \log \sum_X p(Y,X|\theta)
+\eea
+
+\vspace*{-2.5ex}
+\Blue{The EM algorithm (derivation):} 
+\bea 
+{\cal L}(\theta) &=& \log \sum_X q(X) \frac{p(Y,X|\theta)}{q(X)} \ge \sum_X q(X) \log \frac{p(Y,X|\theta)}{q(X)} = \F(q(X),\theta)
+\eea
+
+\vspace*{-1ex}
+\begin{itemize}
+\item {\bf The E step:} maximize $\F(q(X),\theta^{[t]})$ wrt $q(X)$ holding
+  $\theta^{[t]}$ fixed: \vspace*{-1ex}
+\[
+\Blue{q(X) = P(X|Y,\theta^{[t]})}
+\]
+\vspace*{-2.5ex}
+\item {\bf The M step:} maximize $\F(q(X),\theta)$ wrt $\theta$ holding
+  $q(X)$ fixed:
+\[
+\Blue{\theta^{[t+1]} \leftarrow \argmax_{\theta} \sum_X q(X) \log
+p(Y,X|\theta) }
+\]
+\end{itemize}
+
+The E-step requires solving the \Red{{\em inference}} problem, finding
+the distribution over the hidden variables $p(X|Y,\theta^{[t]})$ given the
+current model parameters. This can be done using \Red{\bf belief
+  propagation} or the \Red{\bf junction tree algorithm}. 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Maximum Likelihood Learning with Hidden Variables: \\ The EM
+  Algorithm} 
+
+\PineGreen{\bf ML Learning with Complete Data (No Hidden Variables)}
+
+Log likelihood decomposes into sum of functions of $\theta_i$. Each
+$\theta_i$ can be optimized separately:
+\PineGreen{
+\[
+\hat{\theta}_{ijk} \leftarrow \frac{n_{ijk}}{\sum_{k'} n_{ijk'}} 
+\]}
+where $n_{ijk}$ is the number of times in $\D$ where $x_i=k$ and
+$x_{\mathrm{pa}(i)} = j$. \\
+
+Maximum likelihood solution: \Red{Simply calculate frequencies!} \\[1ex]
+
+\PineGreen{\bf ML Learning with Incomplete Data (i.e.\ with Hidden Variables)}
+
+Iterative EM algorithm
+\begin{itemize}
+
+\item[] \Blue{\bf E step:} compute expected counts given previous settings of
+parameters  $E[n_{ijk} | \D, \btheta^{[t]}]$.
+
+% \vspace*{-1ex}
+\item[] \Blue{\bf M step:} re-estimate parameters using these expected counts
+\PineGreen{
+\[
+\theta^{[t+1]}_{ijk} \leftarrow
+\frac{E[n_{ijk}|\D,\btheta^{[t]}]}{\sum_{k'} E[n_{ijk'}|\D,\btheta^{[t]}]}  
+\]}
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Bayesian parameter learning with {\bf no} hidden variables}
+
+Let $n_{ijk}$ be the number of times ($x^{(n)}_i = k$ and
+$x^{(n)}_{\mathrm{pa}(i)} = j$) in $\D$.
+
+For each $i$ and $j$, $\btheta_{ij\cdot}$ is a probability vector of
+length $K_i \times 1$. \\
+
+Since $x_i$ is a discrete variable with probabilities given by
+$\btheta_{i,j,\cdot}$, the likelihood is: 
+\[
+P(\D|\btheta) = \prod_n \prod_i P(x_i^{(n)}|x_{\mathrm{pa}(i)}^{(n)}, \btheta) =
+\prod_i \prod_j \prod_k \theta_{ijk}^{n_{ijk}}
+\] \\[-1ex]
+If we choose a prior on $\btheta$ of the form: \vspace*{-1ex}
+\[
+P(\btheta) = c \prod_i \prod_j \prod_k
+\theta_{ijk}^{\alpha_{ijk}-1}
+\]
+where $c$ is a normalization constant, and $\sum_k \theta_{ijk}=1$
+$\forall i, j $, then the posterior distribution also has the same
+form:
+\[
+P(\btheta|\D) =  c' \prod_i \prod_j \prod_k
+\theta_{ijk}^{\tilde{\alpha}_{ijk}-1}
+\] \\[-2ex]
+where \Blue{$\tilde{\alpha}_{ijk}= \alpha_{ijk}+ n_{ijk}$}. \\[1ex]
+
+This distribution is called the \Red{Dirichlet distribution}.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Dirichlet Distribution}
+
+The \Red{Dirichlet distribution} is a distribution over the
+$K$-dim probability simplex.\\
+
+Let $\btheta$ be a $K$-dimensional vector s.t.\ $\forall j :\,
+\theta_j \ge 0$ and 
+$\sum_{j=1}^K \theta_j  = 1$
+\[
+P(\btheta|\balpha) = \mbox{Dir}(\alpha_1, \ldots, \alpha_K) \deff
+\PineGreen{\frac{\Gamma(\sum_j \alpha_j)}{\prod_j \Gamma(\alpha_j)}}
+\prod_{j=1}^K \theta_j^{\alpha_j - 1} 
+\]
+where the \PineGreen{first term} is a normalization
+constant\footnote{$\Gamma(x) = (x-1) \Gamma(x-1) = \int_0^\infty
+t^{x-1} e^{-t} dt$. For integer $n$, $\Gamma(n)=(n-1)!$} and $E(\theta_j) =
+\alpha_j / (\sum_k \alpha_k)$\\
+
+The Dirichlet is \Blue{conjugate to the multinomial distribution}. Let 
+\vspace*{-1ex}
+\[
+x| \btheta \sim \mbox{Multinomial}(\cdot|\btheta)
+\]
+That is,  $P(x=j|\btheta) = \theta_j$. Then the posterior is also
+Dirichlet:\vspace*{-1ex} 
+\[
+P(\btheta|x=j,\balpha) = \frac{P(x=j|\btheta)P(\btheta|\balpha)}{P(x=j|\balpha)} = \mbox{Dir}(\tilde{\balpha})
+\]
+where \Blue{$\tilde{\alpha}_j = \alpha_j + 1$}, and $\forall \ell \neq j : \,
+\tilde{\alpha}_\ell = \alpha_\ell$
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}\frametitle{Dirichlet Distributions}
+
+\vspace*{-3ex}
+Examples of Dirichlet distributions over $\btheta=(\theta_1, \theta_2,
+\theta_3)$ which 
+can be plotted in 2D since $\theta_3=1-\theta_1-\theta_2$:
+
+\vspace{2ex}
+
+\centerline{
+\includegraphics[width=1.1in]{dir111}
+\includegraphics[width=1.1in]{dir222}
+\includegraphics[width=1.1in]{dir000}
+}
+
+\vspace{1ex}
+
+\centerline{
+\includegraphics[width=1.1in]{dir202}
+\includegraphics[width=1.1in]{dir220}
+\includegraphics[width=1.1in]{dir999}
+}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Example}
+
+\vspace*{-3ex}
+\parbox{3.8in}{
+Assume $\alpha_{ijk}=1$ $\forall i,j,k$. \\[2ex]
+This corresponds to a \Red{\bf uniform} prior distribution over parameters
+$\theta$. This is not a very strong/dogmatic prior, since any
+parameter setting is assumed a priori possible.} 
+ \hfill \includegraphics[width=0.8in]{dir111}
+
+\vspace*{2ex}
+After observed data $\D$, what are the parameter posterior
+distributions? 
+\[
+P(\theta_{ij\cdot}|\D) = \mathrm{Dir}(n_{ij\cdot}+1)
+\] \\
+
+This distribution predicts, for future data:
+\[
+P(x_i=k|x_{\mathrm{pa}(i)}=j,\D) = \frac{n_{ijk}+1}{\sum_{k'} (n_{ijk'} +
+  1)}
+\]
+
+Adding 1 to each of the counts is a form of smoothing called \Blue{``Laplace's Rule''.}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Bayesian parameter learning with hidden variables}
+
+\Blue{\bf Notation:} let $\D$ be the observed data set, $X$ be hidden variables,
+and $\btheta$ be model parameters. Assume discrete variables and
+Dirichlet priors on $\btheta$\\[1ex]
+
+\Blue{\bf Goal:} to infer $P(\btheta|\D) = \sum_X P(X,\btheta|\D)$\\[1ex]
+
+\Blue{\bf Problem:} since (a) 
+\[
+P(\btheta|\D) = \sum_X P(\btheta|X,\D) P(X|\D),
+\]
+and (b) for every way of filling in the missing data, $P(\btheta|X,\D)$ is a
+Dirichlet distribution, and (c) there are exponentially many ways of
+filling in $X$, it follows that \Red{$P(\btheta|\D)$ is a mixture of
+Dirichlets with exponentially many terms!}\\[2ex]
+
+\Blue{\bf Solutions:}
+
+\begin{itemize}
+\item Find a single best (``Viterbi'') completion of $X$ (Stolcke and
+Omohundro, 1993)
+\item Markov chain Monte Carlo methods 
+\item Variational Bayesian methods (Beal and Ghahramani, 2003)
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Summary of parameter learning}
+
+\vspace*{1ex}
+
+\centerline{
+\begin{tabular}{|l|ll|} \hline
+\phantom{.} & Complete (fully observed) data & Incomplete (hidden
+/missing) data \\  \hline
+ML & calculate frequencies  &  EM \\
+Bayesian & update Dirichlet distributions & MCMC / Viterbi  / VBEM  \\  \hline
+\end{tabular}
+}
+
+\begin{itemize}
+\item For complete data, Bayesian learning is not more costly than ML
+\item For incomplete data, VBEM $\approx$ EM time complexity
+\item Other parameter priors are possible but Dirichlet is 
+  flexible and intuitive.
+\item For binary data, other parametrizations include:
+\begin{itemize}
+\item Sigmoid:
+\vspace*{-1ex}
+\[
+P(x_i=1|x_{\mbox{pa}(i)},\theta_i) = 1  / (1 + \exp \{  -\theta_{i0} - \sum_{j\in
+  \mbox{pa}(i)} \theta_{ij} x_j \})
+\] \vspace*{-2ex}
+\item Noisy-or:
+\vspace*{-1ex}
+\[
+P(x_i=1|x_{\mbox{pa}(i)},\theta_i) = 1  -  \exp \{- \theta_{i0}  - \sum_{j\in
+  \mbox{pa}(i)} \theta_{ij} x_j \} 
+\] \vspace*{-2ex}
+\end{itemize}  
+\item For non-discrete data, similar ideas but generally harder
+  inference and learning.
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Structure learning}
+
+Given a data set of observations of $(A,B,C,D,E)$ can we learn the
+structure of the graphical model?
+
+\vspace{2ex}
+
+\centerline{
+\includegraphics[width=1in]{struct4} \hspace{2ex}
+\includegraphics[width=1in]{struct3}\hspace{2ex}
+\includegraphics[width=1in]{struct2}\hspace{2ex}
+\includegraphics[width=1in]{struct1}
+}
+
+\vspace{6ex}
+
+Let $m$ denote the graph structure = the set of edges.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Structure learning}
+
+\vspace{2ex}
+
+\centerline{
+\includegraphics[width=1in]{struct4} \hspace{2ex}
+\includegraphics[width=1in]{struct3}\hspace{2ex}
+\includegraphics[width=1in]{struct2}\hspace{2ex}
+\includegraphics[width=1in]{struct1}
+}
+
+\vspace{4ex}
+
+\begin{itemize}
+\item[] \Blue{\bf Constraint-Based Learning}: Use statistical tests of
+  marginal and conditional independence. Find the set of DAGs whose
+  d-separation relations match the results of conditional independence tests.
+
+\item[] \Blue{\bf Score-Based Learning}: Use a global score such as
+  the BIC score or Bayesian marginal likelihood. Find the structures
+  that maximize this score.
+\end{itemize}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Score-based structure learning for complete data}
+
+Consider a graphical model with structure $m$, discrete observed data
+$\D$, and parameters $\theta$. Assume Dirichlet priors.\\[2ex]
+
+The Bayesian marginal likelihood score is easy to compute:
+\vspace*{-1ex}
+\[
+\mbox{score}(m) = \log P(\D|m) = \log \int P(\D|\theta,m) P(\theta|m) d \theta
+\]
+\vspace*{-2ex}
+\Green{\small \[
+\mbox{score}(m) = \sum_i \sum_j \left[ 
+\log \Gamma(\sum_k  \alpha_{ijk}) - \sum_k \log \Gamma(\alpha_{ijk}) 
+- \log \Gamma(\sum_k  \tilde{\alpha}_{ijk}) + \sum_k \log
+\Gamma(\tilde{\alpha}_{ijk})  
+\right]
+\]}
+where $\tilde{\alpha}_{ijk} = \alpha_{ijk} + n_{ijk}$. \Red{\bf Note that the
+score decomposes over $i$}.\\
+
+One can incorporate structure prior information $P(m)$ as well:
+\[
+\mbox{score}(m) = \log P(\D|m)  + \log P(m)
+\]
+
+\Blue{\bf Greedy search algorithm:} Start with $m$. Consider modifications
+$m \rightarrow m'$ (edge deletions, additions, reversals). Accept $m'$
+if $\mbox{score}(m') >\mbox{score}(m)$. Repeat.\\[2ex]
+
+\Blue{\bf Bayesian inference of model structure}: Run MCMC on $m$.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Bayesian Structural EM for {\em in}complete data}
+
+% \vspace*{-1ex}
+Consider a graphical model with structure $m$, observed data $\D$,
+hidden variables $X$ and parameters $\theta$\\[2ex]
+
+The Bayesian score is generally intractable to compute:
+\[
+\mbox{score}(m) = P(\D|m) = \int \sum_X P(X,\theta,\D|m) d \theta
+\]
+
+\Blue{\bf Bayesian Structure EM} (Friedman, 1998):
+\begin{enumerate}
+\item compute MAP parameters $\hat{\theta}$ for current model $m$ using EM
+\item find hidden variable distribution $P(X|\D,\hat{\theta})$
+\item for a small set of candidate structures compute or
+approximate \[
+\mbox{score}(m') = \sum_X P(X|\D,\hat{\theta}) \log
+P(\D,X|m')
+\]
+\item $ m \leftarrow m'$ with highest score
+\end{enumerate}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Directed Graphical Models and Causality}
+
+Discovering causal relationships is fundamental to science and cognition.\\[2ex]
+
+Although the independence relations are identical,
+there is a \Blue{\bf causal} difference between \\[-1ex]
+\begin{itemize}
+\item ``smoking'' $\rightarrow$ ``yellow teeth''
+\item ``yellow teeth''  $\rightarrow$ ``smoking''
+\end{itemize}
+
+\Blue{\bf Key idea:} interventions and the do-calculus:
+\[
+P(S|Y=y) \neq P(S|\mbox{do}(Y=y))
+\]
+\[
+P(Y|S=s) = P(Y|\mbox{do}(S=s))
+\] 
+Causal relationships are robust to interventions on the parents.\\[1ex]
+
+The \Red{\bf key difficulty} in learning causal relationships from
+observational data is the presence of \Red{\bf hidden common causes}:
+
+\centerline{\includegraphics[width=2.3in]{hidden-causes}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Learning parameters and structure in undirected graphs}
+
+\vspace*{0.7ex}
+\centerline{\includegraphics[width=0.8in]{ustruct1} \hspace{3ex} \includegraphics[width=0.8in]{ustruct3}}
+
+\vspace*{1ex}
+\hspace{3ex} $P(\bfx|\btheta) = \frac{1}{Z(\btheta)} \prod_j g_j(\bfx_{C_j};
+\btheta_j)$  where $Z(\btheta) = \sum_\bfx \prod_j g_j(\bfx_{C_j}; \btheta_j)$.\\[1ex]
+
+\Red{\bf Problem:} computing $Z(\btheta)$ is computationally
+intractable for general (non-tree-structured) undirected models.
+Therefore, maximum-likelihood learning of parameters is generally
+intractable, Bayesian scoring of structures is intractable, etc.\\[2ex]
+
+\Red{\bf Solutions:} \\[-1ex]
+\begin{itemize}
+\item directly approximate $Z(\btheta)$ and/or its derivatives
+  (cf.\ Boltzmann machine learning; contrastive divergence;
+  pseudo-likelihood) 
+% \vspace*{-1ex}
+\item use approx inference methods (e.g.\ loopy belief
+  propagation, bounding methods, EP).
+\end{itemize}
+
+{\footnotesize (Murray \& Ghahramani, 2004; Murray et al, 2006)
+  for Bayesian learning in undirected models.}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Summary}
+
+\begin{itemize}
+\item Parameter learning in directed models: 
+\begin{itemize}
+\item complete and incomplete data; 
+\item 
+ML and Bayesian methods
+\end{itemize}
+\item Structure learning in directed models: complete and incomplete data
+\item Causality
+\item Parameter and Structure learning in undirected models
+\end{itemize}
+
+\end{frame}
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

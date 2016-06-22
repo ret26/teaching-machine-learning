@@ -1,0 +1,586 @@
+\input{../../teaching}
+
+\newcommand{\xx}{\bfx}
+\usepackage{algorithmic}
+\newcommand{\qi}{q_{{\scriptscriptstyle\backslash} \!i}(\btheta)}
+
+\begin{document}
+
+\titleslide{Lecture 10, 11: Variational Approximations}{February 20th, 22nd, 2008}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Motivation}
+
+Many statistical inference problems result in \Red{intractable
+computations}...\\
+
+$\bullet\, $ 
+Bayesian posterior over model parameters:
+\[
+P(\theta|\D) = \frac{P(\D|\theta) P(\theta)}{P(\D)}
+\]
+
+$\bullet\, $ 
+Computing posterior over hidden variables (e.g.\ for E step of EM):
+\[
+P(H|V,\theta) = \frac{P(V|H,\theta) P(H|\theta)}{P(V|\theta)}
+\]
+
+\parbox{3.5in}{
+$\bullet\, $ 
+Computing marginals in a multiply-connected graphical models:
+\[
+P(x_i|x_j = e) = \sum_{\xx \backslash \{ x_i, x_j\}} P(\xx|x_j = e)
+\]
+\Green{Solutions:} Markov chain Monte Carlo, variational approximations
+}
+\parbox{1.1in}{\centerline{\includegraphics[width=1in]{multiply}}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Example: Binary latent factor model}
+\begin{tabular}{cc}
+\includegraphics[width=1.6in]{multicause} & \raisebox{0.45in}{\parbox{2.9in}{
+Model with $K$ binary latent variables, $s_i\in\{0,1\}$, \\[1ex]
+organised into a vector $\bfs=(s_1, \ldots, s_K)$ \\
+real-valued observation vector $\bfy$ \\
+parameters $\btheta=\{ \{ \bmu_i, \pi_i\}_{i=1}^K, \sigma^2\}$ \\[2ex]
+$\bfs \sim$ Bernoulli \\ 
+$\bfy | \bfs  \sim$ Gaussian  
+}} 
+\end{tabular}
+\vspace*{-2.5ex}
+\begin{eqnarray*}
+p(\bfs|\bpi) = p(s_1, \ldots, s_K|\bpi) &=& \prod_{i=1}^K p(s_i|\pi_i) = \prod_{i=1}^K
+\pi_i^{s_i} (1-\pi_i)^{(1-s_i)}  \\
+p(\bfy|s_1, \ldots, s_K,\bmu,\sigma^2) &=& {\cal N}\left(\sum_{i=1}^K s_i \bmu_i,
+\sigma^2 I\right)  \\[-2ex]
+\end{eqnarray*}
+EM optimizes bound on likelihood: \hfill $ \displaystyle
+{\cal F}(q,\btheta) = \langle \log p(\bfs, \bfy|\btheta)\rangle_{q(\bfs)} -
+\langle \log q(\bfs) \rangle_{q(\bfs)} 
+$ \\
+where $\langle \rangle_q$ is expectation under $q$:  \hspace{2em} $\langle
+f(\bfs)\rangle_q \deff \sum_{\bfs} f(\bfs) q(\bfs)$ \\[1.5ex]
+
+\Blue{\bf Exact E step:} $q(\bfs) = p(\bfs|\bfy,\btheta)$ distribution
+over $2^K$ states: \Red{\bf intractable} for large $K$ 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Example: Binary latent factor model}
+\begin{tabular}{cc}
+\includegraphics[width=1.6in]{multicause} & \raisebox{0.45in}{\parbox{2.9in}{
+Model with $K$ binary latent variables, $s_i\in\{0,1\}$, \\[1ex]
+organised into a vector $\bfs=(s_1, \ldots, s_K)$ \\
+real-valued observation vector $\bfy$ \\
+parameters $\btheta=\{ \{ \bmu_i, \pi_i\}_{i=1}^K, \sigma^2\}$ \\[2ex]
+$\bfs \sim$ Bernoulli \\ 
+$\bfy | \bfs  \sim$ Gaussian 
+}} 
+\end{tabular}
+
+\centerline{\includegraphics[width=4.1in]{lu-results}}
+
+\centerline{\small from Lu et al (2004)}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Review: The EM algorithm}
+
+Given a set of observed (visible) variables $V$, a set of unobserved
+(hidden / latent / missing) variables $H$, and model parameters
+$\theta$, optimize the log likelihood:  
+%
+\begin{equation*}
+{\cal L}(\theta)=\log p(V|\theta)=\log \int p(H,V|\theta)dH,
+\end{equation*}
+% \\
+
+Using Jensen's inequality, for \Red{any distribution} of hidden
+variables $q(H)$ we have:
+%
+\begin{equation*}
+{\cal L}(\theta)=\log\int q(H)\frac{p(H,V|\theta)}{q(H)}\; dH
+\geq\int q(H)\log\frac{p(H,V|\theta)}{q(H)} \; dH={\cal F}(q,\theta),
+\end{equation*}
+%
+defining the ${\cal F}(q,\theta)$ functional, which is a lower bound
+on the log likelihood.\\
+
+In the EM algorithm, we alternately optimize ${\cal F}(q,\theta)$ wrt
+$q$ and $\theta$, and we can prove that this will never decrease
+${\cal L}$.
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The E and M steps of EM}
+
+The lower bound on the log likelihood:
+%
+\begin{equation*}
+{\cal F}(q,\theta)=\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH=
+\int q(H)\log p(H,V|\theta)dH+\Green{{\cal H}(q)},
+\end{equation*}
+%
+where $\Green{{\cal H}(q)=-\displaystyle\int q(H)\log q(H)dH}$ is the \Green{entropy} of
+$q$. We iteratively alternate:
+%
+\begin{description}
+\item[E step:] maximize ${\cal F}(q,\theta)$ wrt the distribution over hidden
+variables given the parameters:
+\begin{equation*}
+\Blue{q^{[k]}(H)}:=\underset{q(H)}{\argmax}\;\;{\cal F}\big(\Blue{q(H)},\Red{\theta^{[k-1]}}\big) = p(H|V,\Red{\theta^{[k-1]}}).
+\end{equation*}
+\item[M step:] maximize ${\cal F}(q,\theta)$ wrt the parameters given
+the hidden distribution:
+\begin{equation*}
+\Blue{\theta^{[k]}}:=\underset{\theta}{\argmax}\;\;
+{\cal F}\big(\Red{q^{[k]}(H)},\Blue{\theta}\big)=
+\underset{\theta}{\argmax}\;\;\int q^{[k]}(H)\log p(H,V|\theta)dH,
+\end{equation*}
+which is equivalent to optimizing the expected complete-data log likelihood
+$\log p(H,V|\theta)$, since the \Green{entropy of $q(H)$} does not depend on 
+$\theta$.
+\end{description}
+
+\end{frame}
+\cut{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{EM as Coordinate Ascent in ${\cal F}$}
+
+\centerline{\includegraphics[width=9in]{fqtheta}}
+\end{frame}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Variational Approximations to the EM algorithm}
+
+Often $p(H|V,\theta)$ is computationally \Red{intractable}, so an
+exact E step is out of the question. \\[1ex]
+
+\Blue{\bf Assume some simpler form for $q(H)$}, e.g.\ $q \in {\cal Q}$, the set of
+fully-factorized distributions over the hidden variables: $q(H) =
+\prod_i q(H_i)$   
+
+\vspace{1ex}
+
+\begin{description}
+\item[E step] (approximate):
+maximize ${\cal F}(q,\theta)$ wrt the distribution over hidden
+variables given the parameters:
+\begin{equation*}
+\Blue{q^{[k]}(H)}:=\underset{\Green{q(H)\in {\cal Q}}}{\argmax}\;\;{\cal
+F}\big(\Blue{q(H)},\Red{\theta^{[k-1]}}\big).
+\end{equation*}
+\item[M step]: maximize ${\cal F}(q,\theta)$ wrt the parameters given
+the hidden distribution:
+\begin{equation*}
+\Blue{\theta^{[k]}}:=\underset{\theta}{\argmax}\;\;
+{\cal F}\big(\Red{q^{[k]}(H)},\Blue{\theta}\big)=
+\underset{\theta}{\argmax}\;\;\int q^{[k]}(H)\log p(H,V|\theta)dH,
+\end{equation*}
+\end{description}
+
+This maximizes a lower bound on the log likelihood.\\[1ex]
+
+Using the fully-factorized $q$ is sometimes called a \Blue{\bf mean-field
+approximation}. \\[1ex]
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Example: Binary latent factor model}
+\begin{tabular}{cc}
+\includegraphics[width=1.6in]{multicause} & \raisebox{0.45in}{\parbox{2.9in}{
+Model with $K$ binary latent variables, $s_i\in\{0,1\}$, \\[1ex]
+organised into a vector $\bfs=(s_1, \ldots, s_K)$ \\
+real-valued observation vector $\bfy$ \\
+parameters $\btheta=\{ \{ \bmu_i, \pi_i\}_{i=1}^K, \sigma^2\}$ \\[2ex]
+$\bfs \sim$ Bernoulli \\ 
+$\bfy | \bfs  \sim$ Gaussian  
+}} 
+\end{tabular}
+\vspace*{-2.5ex}
+\begin{eqnarray*}
+p(\bfs|\bpi) = p(s_1, \ldots, s_K|\bpi) &=& \prod_{i=1}^K p(s_i|\pi_i) = \prod_{i=1}^K
+\pi_i^{s_i} (1-\pi_i)^{(1-s_i)}  \\
+p(\bfy|s_1, \ldots, s_K,\bmu,\sigma^2) &=& {\cal N}\left(\sum_{i=1}^K s_i \bmu_i,
+\sigma^2 I\right)  \\[-2ex]
+\end{eqnarray*}
+EM optimizes bound on likelihood: \hfill $ \displaystyle
+{\cal F}(q,\btheta) = \langle \log p(\bfs, \bfy|\btheta)\rangle_{q(\bfs)} -
+\langle \log q(\bfs) \rangle_{q(\bfs)} 
+$ \\
+where $\langle \rangle_q$ is expectation under $q$:  \hspace{2em} $\langle
+f(\bfs)\rangle_q \deff \sum_{\bfs} f(\bfs) q(\bfs)$ \\[1.5ex]
+
+\Blue{\bf Exact E step:} $q(\bfs) = p(\bfs|\bfy,\btheta)$ distribution
+over $2^K$ states: \Red{\bf intractable} for large $K$ 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Example: Binary latent factors model (cont.)}
+\begin{tabular}{cc}
+\includegraphics[width=1.4in]{multicause} & \raisebox{0.45in}{\parbox{2.4in}{
+\[
+{\cal F}(q,\btheta) = \langle \Red{\log p(\bfs, \bfy|\btheta)} \rangle_{q(\bfs)} -
+\langle \log q(\bfs) \rangle_{q(\bfs)} 
+\]
+}}
+\end{tabular}
+
+{\small
+\begin{eqnarray*}
+\Red{\log} & \Red{p(\bfs,\bfy|\btheta)} +c & \\
+=&  \sum_{i=1}^K \Blue{s_i} \log \pi_i & + (1-\Blue{s_i}) \log
+(1-\pi_i) - D \log \sigma - \frac{1}{2 \sigma^2} 
+(\bfy - \sum_i \Blue{s_i} \bmu_i)\T (\bfy - \sum_i \Blue{s_i} \bmu_i) \\
+=& \sum_{i=1}^K \Blue{s_i} \log \pi_i & + (1-\Blue{s_i}) \log
+(1-\pi_i) - D \log \sigma \\ & & - \frac{1}{2 \sigma^2} 
+\left(\bfy\T \bfy - 2 \sum_i \Blue{s_i} \bmu_i\T \bfy + \sum_i \sum_j \Blue{s_i  s_j}
+\bmu_i\T \bmu_j\right) 
+\end{eqnarray*}
+}
+we therefore need $\langle \Blue{s_i} \rangle$  and $\langle \Blue{s_i s_j} \rangle$ to
+compute $\cal F$. \\[0.1ex]
+
+These are the expected {\em sufficient statistics} of the hidden variables. 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Example: Binary latent factors model (cont.)}
+
+{\bf Variational approximation}: 
+\[
+q(\bfs)= \prod_i q_i(s_i) = \prod_{i=1}^K \lambda_i^{s_i}
+(1-\lambda_i)^{(1-s_i)} 
+\]
+where $\lambda_i$ is a parameter of the variational approximation
+modelling the posterior mean of $s_i$ (compare to $\pi_i$ which models
+the {\em prior} mean of $s_i$). \\[1ex]
+Under this approximation we know $\langle \Blue{s_i} \rangle = \lambda_i$
+and $\langle \Blue{s_i s_j} \rangle = \lambda_i \lambda_j + \delta_{ij}
+(\lambda_i - \lambda^2_i)$.
+\[
+\begin{split}
+{\cal F}(\blambda,\btheta)  = &
+\sum_i \lambda_i \log \frac{\pi_i}{\lambda_i} +
+(1-\lambda_i) \log \frac{(1-\pi_i)}{(1-\lambda_i)} \\
+& - D \log \sigma  - \frac{1}{2 \sigma^2}  
+(\bfy - \sum_i \lambda_i \bmu_i)\T (\bfy - \sum_i \lambda_i \bmu_i)  \\
+& -\frac{1}{2\sigma^2} \sum_i (\lambda_i - 
+\lambda_i^2) \bmu_i\T \bmu_i  - \frac{D}{2} \log
+(2 \pi)
+\end{split}
+\]
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Fixed point equations for the binary latent factors model}
+
+Taking derivatives w.r.t.\ $\lambda_i$:
+\[
+\deldel{\cal F}{\lambda_i} = \log \frac{\pi_i}{1-\pi_i} - \log
+\frac{\lambda_i}{1-\lambda_i} + \frac{1}{\sigma^2} (\bfy - \sum_{j\neq
+i} \lambda_j \bmu_j)\T \bmu_i  - \frac{1}{2\sigma^2} \bmu_i\T \bmu_i
+\]
+Setting to zero we get fixed point equations:
+\[
+\lambda_i = f \left( \log \frac{\pi_i}{1-\pi_i} + \frac{1}{\sigma^2}
+(\bfy - \sum_{j\neq i} \lambda_j \bmu_j)\T \bmu_i  -
+\frac{1}{2\sigma^2} \bmu_i\T \bmu_i \right)  
+\]
+where $f(x) = 1/(1+\exp(-x))$ is the logistic (sigmoid)
+function. \includegraphics[width=0.7in]{sigm} \\[1ex]
+
+\Blue{\bf Learning algorithm:} \\[1ex]
+\Blue{\bf E step:} run fixed point equations until convergence of
+$\blambda$ {\em for each data point}. \\
+\Blue{\bf M step:} re-estimate $\btheta$ given $\blambda$s.
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{KL divergence}
+
+Note that 
+\begin{description}
+\item[E step]
+maximize ${\cal F}(q,\theta)$ wrt the distribution over hidden
+variables, given the parameters:
+\begin{equation*}
+\Blue{q^{[k]}(H)}:=\underset{q(H)\in {\cal Q}}{\argmax}\;\;{\cal
+F}\big(\Blue{q(H)},\Red{\theta^{[k-1]}}\big).
+\end{equation*}
+\end{description}
+is equivalent to:
+\begin{description}
+\item[E step]
+minimize ${\cal KL}(q \| p(H|V,\theta))$ wrt the distribution over
+hidden variables, given the parameters:
+\begin{equation*}
+\Blue{q^{[k]}(H)}:=\underset{q(H)\in {\cal Q}}{\argmin} \int \Blue{q(H)} \log
+\frac{\Blue{q(H)}}{p(H|V,\Red{\theta^{[k-1]}})} dH
+\end{equation*}
+\end{description}
+
+
+So, in each E step, the algorithm tries to find
+the best approximation to $p$ in ${\cal Q}$. \\[1ex]
+
+This is related to ideas in {\em information geometry}.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Variational Approximations to Bayesian Learning}
+
+\begin{eqnarray*}
+\log p(V) &=& \log \int \int p(V,H|\btheta) p(\btheta) \; dH \; d\btheta \\
+&\ge & \int \int q(H,\btheta) \log \frac{p(V,H,\btheta)}{q(H,\btheta)}
+\; dH \; d\btheta 
+\end{eqnarray*} \\[1ex]
+
+Constrain $q \in {\cal Q}$ s.t. $q(H,\btheta) = q(H) q(\btheta)$. \\[2ex]
+
+This results in the \Green{\bf variational Bayesian EM algorithm}. \\[2ex]
+
+More about this later (when we study model selection).
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Variational Approximations and Graphical Models I}
+
+Let $q(H) = \prod_i q_i(H_i)$. \\[2ex]
+
+Variational approximation maximises $\cal F$:
+\[
+{\cal F}(q) = \int q(H) \log p(H,V) dH - \int q(H) \log q(H) dH
+\]
+Focusing on one term, $q_j$, we can write this as:
+\[
+{\cal F}(q_j) = \int q_j(H_j) \left\langle \log p(H,V)
+\right\rangle_{\sim q_j(H_j)} dH_j + \int q_j(H_j) \log q_j(H_j) dH_j+
+\mbox{const} 
+\]
+Where $\left\langle \cdot \right\rangle_{\sim q_j(H_j)}$ denotes
+averaging w.r.t.\ $q_i(H_i)$ for all $i \neq j$ \\[2ex]
+
+Optimum  occurs when: 
+\[
+\Blue{q^*_j(H_j) = \frac{1}{Z} \exp \left\langle \log p(H,V)
+\right\rangle_{\sim q_j(H_j)}}
+\]
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Variational Approximations and Graphical Models II}
+
+
+\parbox{3in}{
+Optimum  occurs when: 
+\[
+\Blue{q^*_j(H_j) = \frac{1}{Z} \exp \left\langle \log p(H,V)
+\right\rangle_{\sim q_j(H_j)}}
+\]
+
+Assume graphical model: $p(H,V) = \prod_i p(X_i|\mbox{pa}_i)$
+}
+\parbox{1.8in}{
+\centerline{\includegraphics[width=1.8in]{gmxx}}
+}
+
+\begin{eqnarray*}
+\log q^*_j(H_j) &=& \Big\langle \sum_i \log p(X_i|\mbox{pa}_i)
+\Big\rangle_{\sim q_j(H_j)} + \mbox{const} \\
+&=&  \left\langle \log p(H_j|\mbox{pa}_j) \right\rangle_{\sim
+q_j(H_j)} + \sum_{k \in \mbox{ch}_j } \left\langle \log
+p(X_k|\mbox{pa}_k) \right\rangle_{\sim q_j(H_j)}
++ \mbox{const} 
+\end{eqnarray*}
+
+This defines messages that get passed between nodes in the graph. Each
+node receives messages from its \Blue{Markov boundary}: parents,
+children and parents of children. \\[1ex]
+
+\centerline{\Green{\small Variational Message Passing (Winn and Bishop, 2004)}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Expectation Propagation (EP)}
+
+% \newcommand{\D}{\mathcal{D}}
+% \newcommand{\Magenta}{\textcolor{magenta}}
+
+\vspace*{-1ex}
+Data (iid) $\D=\{ \bfx^{(1)} \ldots, \bfx^{(N)} \}$, model
+$p(\bfx|\btheta)$, with parameter prior $p(\btheta)$. \\
+
+The parameter posterior is: \hfill $ \displaystyle
+p(\btheta|\D) = \frac{1}{p(\D)} p(\btheta) \prod_{i=1}^N
+p(\bfx^{(i)}|\btheta) $\\
+
+We can write this as product of factors over $\btheta$: \hfill $\displaystyle
+p(\btheta) \prod_{i=1}^N p(\bfx^{(i)}|\btheta) = \PineGreen{\prod_{i=0}^N f_i(\btheta)}
+$\\
+where $f_0(\btheta) \deff p(\btheta)$ and $f_i(\btheta) \deff
+p(\bfx^{(i)}|\btheta)$ and we will ignore the constants. \\
+
+We wish to approximate this by a product of {\em simpler} terms: \hfill $\displaystyle
+q(\btheta) \deff \Magenta{\prod_{i=0}^N \tilde{f}_i (\btheta)}$ \\
+
+\begin{center}
+\begin{tabular}{ll}
+$\displaystyle \min_{q(\btheta)} \KL\left(\PineGreen{\prod_{i=0}^N f_i(\btheta) }\right\| \left. \Magenta{\prod_{i=0}^N
+\tilde{f}_i(\btheta)}\right)$ & \Red{(intractable)} \\[2.5ex]
+$\displaystyle \min_{\tilde{f}_i(\btheta)} \KL\left( \PineGreen{f_i(\btheta)} \| \Magenta{\tilde{f}_i(\btheta)}\right)$ & \Red{(simple, non-iterative, inaccurate)} \\[2.5ex]
+$\displaystyle \min_{\tilde{f}_i(\btheta)} \KL \Big( \PineGreen{f_i(\btheta)} \Magenta{\prod_{j\neq i}
+  \tilde{f}_j(\btheta)} \Big\| 
+\Magenta{\tilde{f}_i(\btheta) \prod_{j\neq i} \tilde{f}_j(\btheta)}
+\Big)$ & \Red{(simple, iterative, accurate)} $\leftarrow$ \Blue{EP} 
+\end{tabular}
+\end{center}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Expectation Propagation II}
+
+% \vspace*{-1ex}
+
+\centerline{
+\fbox{\parbox{4.1in}{\begin{flushleft}
+\begin{algorithmic}
+\STATE Input  $f_0(\btheta) \ldots f_N(\btheta)$
+\STATE Initialize $\tilde{f}_0(\btheta)=f_0(\btheta)$,
+$\tilde{f}_i(\btheta)=1$ for $i>0$, $q(\btheta)=\prod_i
+\tilde{f}_i(\btheta)$ 
+\REPEAT 
+\FOR{$i=0 \ldots N$}
+\STATE \Blue{Deletion:} $\displaystyle \qi \leftarrow
+\frac{q(\btheta)}{\tilde{f}_i(\btheta)} = \prod_{j \neq i}
+\tilde{f}_j(\btheta)$ \\
+\STATE \Blue{Projection:} $\displaystyle \tilde{f}^{\mathrm{new}}_i(\btheta) \leftarrow
+\arg\min_{f(\btheta)} \, \KL(f_i(\btheta) \qi \|
+f(\btheta) \qi)$ \\
+\STATE \Blue{Inclusion:} $\displaystyle q(\btheta) \leftarrow
+\tilde{f}^{\mathrm{new}}_i(\btheta) \, \qi $\\
+\ENDFOR
+\UNTIL{convergence}
+\end{algorithmic}
+\end{flushleft}}}}
+
+\Red{\bf The EP algorithm.} Some variations are possible: here we assumed
+  that $f_0$ is in the exponential family, and we updated sequentially over
+  $i$. % The names for the steps (deletion,  projection, inclusion)
+       % are not the same as in~(Minka, 2001) 
+\begin{itemize}
+\item Tries to minimize the opposite KL to variational methods
+\item $\tilde{f}_i(\btheta)$ in exponential family $\rightarrow$
+projection step is \Green{moment matching} 
+% \item Loopy belief propagation and assumed density filtering are special cases 
+\item No convergence guarantee (although convergent forms can be developed) 
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Some Further Readings}
+
+{\small 
+\begin{itemize}
+\item MacKay, D.J.C.\ (2003) Information Theory, Inference, and
+Learning Algorithms. Chapter~33.
+\item Bishop, C.M.\ (2006) Pattern Recognition and Machine Learning. 
+\item Winn, J.\ and Bishop, C.M.\ (2005) Variational Message Passing. 
+{\em J.\ Machine Learning
+  Research}. {\tt http://johnwinn.org/Publications/papers/VMP2005.pdf}
+\item Lu, X., Hauskrecht, M., and Day, R.S. (2004) Modeling cellular processes with
+variational Bayesian cooperative vector quantizer. In the Proceedings
+of the Pacific Symposium on Biocomputing (PSB) 9:533-544.
+{\tt http://psb.stanford.edu/psb-online/proceedings/psb04/lu.pdf}
+\item Minka, T.P.\ (2004) Roadmap to EP: \\
+{\tt http://research.microsoft.com/$\sim$minka/papers/ep/roadmap.html}
+\item Ghahramani, Z. (1995) Factorial learning and the EM algorithm.
+In Adv Neur Info Proc Syst 7. \\
+{\tt http://learning.eng.cam.ac.uk/zoubin/zoubin/factorial.abstract.html}
+\item Jordan, M.I., Ghahramani, Z., Jaakkola, T.S. and Saul, L.K. (1999) 
+     An Introduction to Variational Methods for Graphical Models.
+Machine Learning 37:183-233. Available at:
+{\tt http://learning.eng.cam.ac.uk/zoubin/papers/varintro.pdf}
+\end{itemize}
+}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: The binary latent factors model for an i.i.d.\ data set}
+
+\vspace*{-1ex}
+Assume data set ${\cal D}=\{ \bfy^{(1)} \ldots, \bfy^{(N)}\}$ of $N$
+points and params $\btheta=\{ \{ \bmu_i, \pi_i\}_{i=1}^K,
+\sigma^2\}$ \\[1ex]
+Use a factorised distribution: \\[1ex]
+\centerline{$\displaystyle q(\bfs)=\prod_{n=1}^N q_n(\bfs^{(n)}) = 
+\prod_{n=1}^N \prod_{i=1}^K q_n(s_{i}^{(n)}) = \prod_{n} \prod_{i} (\lambda^{(n)}_i)^{s_i^{(n)}} (1-\lambda^{(n)}_i)^{(1-s_i^{(n)})}$}
+
+\vspace*{-2ex}
+\begin{eqnarray*}
+p({\cal D}|\btheta)&=&\prod_{n=1}^N p(\bfy^{(n)}|\btheta)\\
+p(\bfy^{(n)}|\btheta) &=& \sum_{\bfs} p(\bfy^{(n)}|\bfs,\bmu,\sigma)
+p(\bfs|\bpi)\\
+{\cal F}(q(\bfs),\btheta) &=& \sum_n {\cal
+  F}_n(q_n(\bfs^{(n)}),\btheta) \le \log p({\cal D}|\btheta) \\
+{\cal F}_n(q_n(\bfs^{(n)}),\btheta) &=& \left\langle \log p(\bfs^{(n)}, \bfy^{(n)}|\btheta) \right\rangle_{q_n(\bfs^{(n)})} -
+\left\langle \log q_n(\bfs^{(n)}) \right\rangle_{q_n(\bfs^{(n)})}
+\end{eqnarray*} 
+
+We need to optimise w.r.t.\ $q_n(\bfs^{(n)})$ for
+{\em each data point}, so \\
+
+\Blue{\bf E step:} optimize $q_n(\bfs^{(n)})$ (i.e.\ $\blambda^{(n)}$) for each $n$.\\
+\Blue{\bf M step:} re-estimate $\btheta$ given  $q_n(\bfs^{(n)})$'s. 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: How tight is the lower bound?}
+ 
+It is hard to compute a nontrivial general upper bound. \\[1ex]
+
+To determine how tight the bound is, one can approximate the true
+likelihood by a variety of other methods. \\[1ex]
+
+One approach is to use the variational approximation as as a proposal
+distribution for {\bf importance sampling}.
+
+\begin{center}
+\includegraphics[width=3in]{importance}
+% \put(-340, 30){\mbox{$q(x)$}}
+% \put(-220, 105){\mbox{$p(x)$}}
+\end{center}
+
+\vspace{0.1in}
+But this will generally not work well. See exercise 33.6 in David
+MacKay's textbook. 
+
+\end{frame}
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,0 +1,539 @@
+\input{../../teaching}
+
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\yy}{\mathbf{y}}
+\newcommand{\im}{\item}
+\newlength{\oin}
+\setlength{\oin}{0.45in}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\nn}{\nonumber}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bv}{\mathbf{v}}
+
+
+
+\begin{document}
+
+\titleslide{Lecture 12: Model Comparison}{February 27th, 2008}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Model complexity and overfitting: \\ a simple example}
+
+\vspace{0.5\oin}
+\centerline{\includegraphics[width=6\oin]{ofitnew}}
+\vspace{0.3\oin}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Learning Model Structure}
+
+\vspace*{-5ex}
+How many clusters in the data? \hfill \parbox{1.5\oin}{\includegraphics[width=1.5\oin]{clusters}}
+
+\vspace*{-2.5ex}
+What is the intrinsic dimensionality of the data? \hfill \parbox{1.5\oin}{\includegraphics[width=1.5\oin]{surface}}
+
+Is this input relevant to predicting that output?
+\hfill \parbox{1.5\oin}{\includegraphics[width=1.5\oin]{bonds}} 
+% Japanese Govt Bond 
+
+\vspace*{-2.5ex}
+What is the order of a dynamical system?
+\hfill \parbox{1.5\oin}{\includegraphics[width=1.5\oin]{steelpic}}
+
+How many states in a hidden Markov model? 
+
+\vspace*{-2.5ex}
+\phantom{.} \hfill {\small \tt SVYDAAAQLTADVKKDLRDSWKVIGSDKKGNGVALMTTY}
+
+\vspace*{-2.5ex}
+How many auditory sources in the input? \hfill
+\parbox{1.5\oin}{\includegraphics[width=1.5\oin]{bss}}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Using Occam's Razor to Learn Model Structure}
+\vspace*{-0.3\oin}
+Compare model classes $m$ using their posterior probability given the
+data:  
+\vspace*{-0.3\oin}
+\[
+P(m|\by) = \frac{\Red{P(\by|m)} P(m)}{P(\by)}, \hspace*{0.5\oin}
+\Red{P(\by|m)} = \int_{\Theta_m} P(\by|\btheta_m, m)
+P(\btheta_m|m) \; d {\btheta_m}
+\]
+{\bf Interpretation of $P(\by|m)$:} The probability that {\em
+randomly selected}\ parameter values from the model class would
+generate data set $\by$. \\[1ex]
+
+Model classes that are \Green{too simple} are unlikely to
+generate the data set. \\[1ex]
+
+Model classes that are \Blue{too complex} can generate many possible
+data sets, so again, they are unlikely to generate that particular
+data set at random.\\[3ex]
+
+\centerline{\includegraphics[width=0.4\textwidth]{ockham}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Bayesian Model Comparison: Terminology}
+
+\begin{itemize}
+\item A \Blue{model class} $m$ is a set of models parameterised by
+$\btheta_m$, e.g. the set of all possible mixtures of $m$ Gaussians. 
+
+\item  The \Blue{marginal likelihood} of model class $m$:
+\[
+\Red{P(\by|m)} = \int_{\Theta_m} P(\by|\btheta_m, m)
+P(\btheta_m|m) \; d {\btheta_m}
+\]
+is also known as the \Blue{Bayesian evidence} for model $m$.
+
+\item The ratio of two marginal likelihoods is known as the
+\Blue{Bayes factor}: 
+\[
+\frac{P(\by|m)}{P(\by|m')}
+\]
+
+\item The \Blue{Occam's Razor} principle is, roughly speaking, that
+one should prefer simpler explanations than more complex explanations.
+
+\item Bayesian inference formalises and {\em automatically} implements
+the Occam's Razor principle.
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Bayesian Model Comparison: \normalsize Occam's Razor at Work }
+
+\vspace{0.1\oin}
+\centerline{\includegraphics[width=5\oin,angle=90]{ofitsamps2} 
+\raisebox{36pt}[0pt][36pt]{
+\includegraphics[width=3\oin,angle=90]{ofitpost2}}}
+
+\vspace*{-4ex}
+e.g. for quadratic (M=2): $ y = a_0 + a_1 x + a_2 x^2 + \epsilon$,
+where $\epsilon \sim {\cal   N}(0,\tau)$ and $\btheta_2 = [a_0 \; a_1
+\; a_2 \; \tau]$ \\[1ex]
+{\tt demo: polybayes}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Practical Bayesian approaches}
+\vspace{8pt}
+
+\begin{itemize}
+ \item \Red{Laplace approximations}: 
+        \begin{itemize}
+         \item Makes a Gaussian approximation about the maximum {\em a
+                posteriori} parameter estimate. \end{itemize}   
+    \item \Red{Bayesian Information Criterion} (BIC)
+        \begin{itemize}
+	\item  an  asymptotic approximation. \end{itemize}
+    \item \Red{Markov chain Monte Carlo methods} (MCMC):
+    \begin{itemize}
+         \item In the limit are guaranteed to converge, but:
+        \item Many samples required to ensure accuracy.
+        \item Sometimes hard to assess convergence. \end{itemize}
+    \item  \Red{Variational approximations}
+\end{itemize}
+
+\vspace*{0.6\oin}
+Note: other deterministic approximations have been developed more
+recently and can be applied in this context:  e.g.\ Bethe
+approximations and Expectation Propagation.
+
+\vfill
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Laplace Approximation}
+
+\vspace*{-0.4\oin}
+{\small data set: $\yy$ \hspace{5mm} models: $m=1 \ldots,M$
+\hspace{5mm} 
+parameter sets: $\btheta_1 \ldots, \btheta_M$} \\
+
+Model Comparison: \hspace{1\oin} $P(m|\yy) \propto P(m)
+P(\yy|m) $ \\[1ex]
+
+For large amounts of data (relative to number of parameters, $d$) the
+parameter posterior is approximately Gaussian around the MAP estimate
+$\hat{\btheta}_m$: 
+\[
+P(\btheta_m|\yy,m) \approx (2 \pi)^{\frac{-d}{2}}
+|A|^{\frac{1}{2}} \exp \left \{ -\frac{1}{2} (\btheta_m - \hat{\btheta}_m)^\T A
+(\btheta_m - \hat{\btheta}_m) \right\}
+\]
+\[
+P(\yy|m) = \frac{P(\btheta_m, \yy| m)}{P(\btheta_m|\yy,m)}
+\]
+Evaluating the above for $\ln P(\yy|m)$ at
+$\hat{\btheta}_m$ we get the Laplace approximation:
+\Blue{
+\[
+\ln P(\yy|m) \approx \ln P(\hat{\btheta}_m|m) + \ln
+P(\yy|\hat{\btheta}_m,m) + \frac{d}{2} \ln 2 \pi - \frac{1}{2} \ln
+|A|
+\]}
+$-A$ is the $d\times d$ Hessian matrix of $\log
+P(\btheta_m|\yy,m)$: 
+$A_{k \ell }= -\frac{\partial^2}{\partial \theta_{m k}
+  \partial \theta_{m \ell}} \ln P(\btheta_m|\yy,m) |_{\hat{\btheta}_m}$.\\[1ex]
+
+Can also be derived from $2^{nd}$ order Taylor expansion of log
+posterior. \\[1ex]
+The Laplace approximation can be used for model comparison. 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Bayesian Information Criterion (BIC) }
+
+BIC can be obtained from the Laplace approximation:
+\begin{equation}
+\ln P(\yy|m) \approx \ln P(\hat{\btheta}_m|m) + \ln
+P(\yy|\hat{\btheta}_m,m) + \frac{d}{2} \ln 2 \pi - \frac{1}{2} \ln
+|A| \nonumber
+\end{equation}
+in the large sample limit $(N\rightarrow \infty)$ where $N$ is the
+number of data points, $A$ grows as $N A_0$ for some fixed matrix
+$A_0$, so $\ln |A| \rightarrow \ln |NA_0| = \ln (N^d |A_0|) = d \ln N +
+\ln |A_0|$. Retaining only terms that grow in $N$ we get:
+\Blue{
+\begin{equation}
+\ln P(\yy|m) \approx \ln P(\yy|\hat{\btheta}_m,m) - \frac{d}{2} \ln 
+N  \nonumber
+\end{equation} } 
+
+\vspace*{-5ex}
+Properties:
+\begin{itemize}
+\item Quick and easy to compute, and does not depend on the prior
+\im We can use the ML estimate of $\theta$ instead of the MAP estimate
+\im It assumes that in the large sample limit, all the parameters are
+well-determined (i.e.\ the model is \Red{identifiable}; otherwise, $d$
+should be the number of \Red{well-determined} parameters)
+\im \Red{\bf Danger:} counting parameters can be deceiving! (c.f.\ sinusoid)
+\im It is equivalent to the ``Minimum Description Length'' (MDL) criterion 
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Sampling Approximations}
+
+\vspace*{-1ex}
+Let's consider a non-Markov chain method, {\bf Importance Sampling:}\\
+\vspace*{-2ex}
+\begin{eqnarray*}
+\ln P(\yy|m) &=& \ln \int_{\Theta_m} P(\yy|\btheta_m,m)
+P(\btheta_m|m) \; d \btheta_m\\
+&=& \ln \int_{\Theta_m} P(\yy|\btheta_m,m)
+\frac{P(\btheta_m|m)}{Q(\btheta_m)} Q(\btheta_m) \; d \btheta_m\\
+&\approx & \ln \frac{1}{K} \sum_k P(\yy|\btheta_m^{(k)},m)
+\frac{P(\btheta_m^{(k)}|m)}{Q(\btheta_m^{(k)})} 
+\end{eqnarray*}
+where $\btheta_m^{(k)}$ are i.i.d.\ draws from  
+$Q(\btheta_m)$. Assumes we can {\bf sample from} and {\bf evaluate} $Q(\btheta_m)$
+(incl.\ normalization!) and we can {\bf compute the likelihood}
+$P(\yy|\btheta_m^{(k)},m)$. \\[2ex]
+
+Although importance sampling does not work well in high dimensions,
+it inspires the following approach:
+Create a {\bf Markov chain,} $Q_k \rightarrow Q_{k+1} \ldots$ for which:
+\begin{itemize}
+\item $Q_k(\btheta)$ can be evaluated including normalization \vspace*{-1ex}
+\item $\lim_{k\rightarrow \infty} Q_k(\btheta) = P(\btheta|\yy,m)$
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Variational Bayesian Learning \\[0.1ex] \normalsize Lower
+Bounding the Marginal Likelihood} 
+
+Let the hidden latent variables be $\bx$, data $\by$ and the parameters
+$\btheta$.\\[1ex]
+\Blue{Lower bound} the \PineGreen{marginal likelihood (Bayesian
+model evidence)} using Jensen's inequality:
+\begin{eqnarray*}
+\ln \PineGreen{P(\by)} & = & \ln \int d\bx \, d\btheta \;
+P(\by,\bx,\btheta) \hspace{20ex} ||m\\
+&= & \ln \int d\bx \, d\btheta \; \Red{Q(\bx,\btheta)} \frac{P(\by,\bx,\btheta)}{\Red{Q(\bx,\btheta)}} \\
+&\geq & \int d\bx \, d\btheta \; \Red{Q(\bx,\btheta)} \ln
+\frac{P(\by,\bx,\btheta)}{\Red{Q(\bx,\btheta)}} .
+\end{eqnarray*}
+\vspace{-2pt}
+Use a simpler, factorised approximation to $Q(\bx,\btheta)$: 
+\begin{eqnarray*}
+\hspace*{-0.2\oin}
+\ln P(\by) & \geq & \int d\bx \, d\btheta \; \Red{ Q_\bx(\bx)
+Q_{\btheta}(\btheta) } \ln \frac{P(\by,\bx,\btheta)}{\Red{ Q_\bx(\bx)
+Q_{\btheta}(\btheta) } } \\
+&=& \cF(\Red{Q_\bx(\bx)},\Red{Q_{\btheta}(\btheta)},\by) .
+\end{eqnarray*}
+Maximize this lower bound.
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Variational Bayesian Learning \ldots}
+
+Maximizing this \Blue{lower bound}, $\cF$, leads to {\bf EM-like} updates:
+\begin{eqnarray*}
+  \Red{Q_\bx^*(\bx)} &\propto& \exp \left \langle \ln P(\bx,\!\by|\btheta) \right \rangle_{\Red{Q_{\btheta}(\btheta)}} \hspace{36pt} {\it E\!-\!like \ step} \nn \\
+  \Red{Q_{\btheta}^*(\btheta)} &\propto& P(\btheta) \exp \left \langle \ln P(\bx,\!\by|\btheta) \right \rangle_{\Red{Q_\bx(\bx)}} \hspace{11pt} {\it M\!-\!like \ step} \nn
+\end{eqnarray*}
+
+%\vspace{-5pt}
+Maximizing $\cF$ is equivalent to minimizing KL-divergence between the
+{\em approximate posterior}, $Q(\btheta)Q(\bx)$ and the {\em true posterior}, 
+$P(\btheta,\bx|\by)$.
+
+\begin{eqnarray*}
+\ln P(\by) - \cF(Q_\bx(\bx),Q_{\btheta}(\btheta),\by) &=& \\
+\ln P(\by) - \int d\bx \, d\btheta \; Q_\bx(\bx)
+Q_{\btheta}(\btheta)  \ln \frac{P(\by,\bx,\btheta)}{ Q_\bx(\bx)
+Q_{\btheta}(\btheta)  } &=&  \\ 
+\int d\bx \, d\btheta \; Q_\bx(\bx)
+Q_{\btheta}(\btheta)  \ln \frac{ Q_\bx(\bx)
+Q_{\btheta}(\btheta)  }{P(\bx,\btheta|\by)} &=&  KL(Q||P)
+\end{eqnarray*}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Mixture of Factor Analysers}
+
+\centerline{
+\includegraphics[width=3\oin]{mfacdots}}
+
+\vspace*{-2.5em}
+Goal:
+\begin{itemize}
+\item Infer number of clusters
+\item Infer intrinsic dimensionality of each cluster
+\end{itemize}
+Under the assumption that each cluster is Gaussian \\
+
+{\tt embed\_demo}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Mixture of Factor Analysers}
+
+\Blue{True data:} 6 Gaussian clusters with dimensions: (1 7 4 3 2 2)
+embedded in 10-D \\[1ex]
+
+\Red{Inferred structure:}\\[1ex]
+\centerline{\includegraphics[width=8\oin]{table}}
+
+\begin{itemize}
+\item Finds the clusters and dimensionalities efficiently.
+      \item The model complexity reduces in line with the lack of data
+support.   
+\end{itemize}
+
+{\tt demos: run\_simple} and {\tt ueda\_demo}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Hidden Markov Models}
+
+\centerline{\includegraphics[width=0.7\textwidth]{hmm}} 
+
+\vspace*{1ex}
+
+Discrete hidden states, $\bfs_t$.\\
+
+Observations $\by_t$. \\[2ex]
+
+How many hidden states? \\
+What structure state-transition matrix?\\[2ex]
+
+{\tt demo: vbhmm\_demo}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Linear Dynamical Systems}
+\centerline{
+\includegraphics[width=5\oin]{ssm}
+} 
+\begin{itemize}
+\item Assumes \Blue{$\by_t$} generated from a sequence of Markov {\em
+hidden} state variables \Blue{$\bx_t$}
+\im If transition and output functions are linear, time-invariant, and
+noise distributions are Gaussian, this is a \Red{linear-Gaussian
+state-space model}: 
+\[ \bx_t = A \bx_{t-1} + \bw_t, \hspace{0.4\oin}  \by_t = C \bx_t + \bv_t  \]
+% \im This is a dynamic generalization of factor analysis.
+\im Three levels of inference: 
+\begin{enumerate} 
+\item[I] Given data, structure and parameters, {\bf Kalman smoothing}
+$\rightarrow$ hidden state; \\
+\item[II] Given data and structure, {\bf EM} $\rightarrow$ hidden
+state and parameter point estimates; \\
+\item[III] Given data only, {\bf VEM} $\rightarrow$ {\bf model
+structure} {\em and} {\bf distributions over parameters} {\em and}
+{\bf hidden state}. 
+\end{enumerate}
+\end{itemize}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\cut{
+\begin{frame}
+\frametitle{Linear Dynamical System Results}
+
+{\bf Inferring model structure:} \\[1ex] 
+
+\parbox{2.7\oin}{\begin{center}
+a) SSM(0,3) i.e. FA \\ \ \\ 
+\centerline{
+\includegraphics[width=55pt]{exp1}
+}
+ \end{center}
+}
+\parbox{2.2\oin}{\begin{center}
+b) SSM(3,3) \\ \ \\ 
+\centerline{
+\includegraphics[width=55pt]{exp2}}
+ \end{center}
+}
+\parbox{2.2\oin}{\begin{center}
+c) SSM(3,4) \\ \ \\ 
+\centerline{
+\includegraphics[width=115pt]{exp3}
+}
+ \end{center}
+}
+\vspace{1ex}
+
+{\bf Inferred model complexity reduces with less data:} \\[1ex]
+
+True model: \ \ SSM(6,6) \hspace{10pt} $\bullet$
+10-dim observation vector. 
+\vspace{2ex}
+
+\centerline{
+\includegraphics[width=45pt]{degrad400} 
+\put(-21,45){400}
+\includegraphics[width=45pt]{degrad350} 
+\put(-21,45){350}
+\includegraphics[width=45pt]{degrad250} 
+\put(-21,45){250}
+\includegraphics[width=45pt]{degrad100} 
+\put(-21,45){100}
+\includegraphics[width=45pt]{degrad030} 
+\put(-21,45){30}
+\includegraphics[width=45pt]{degrad020} 
+\put(-21,45){20}
+\includegraphics[width=45pt]{degrad010} 
+\put(-21,45){10}
+}
+
+{\tt demo: bayeslds}
+\end{frame}
+}
+
+\cut{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Independent Components Analysis}
+
+Blind Source Separation: 5 $\times$ 100 msec speech and music sources
+linearly mixed to produce 11 signals (microphones)
+
+\includegraphics[width=9.5\oin]{attiasbss} 
+
+from Attias (2000)
+
+
+
+\end{frame}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Summary \& Conclusions}
+
+\begin{itemize} 
+\item Bayesian learning avoids overfitting and can be
+used to do model comparison / selection. \vspace*{-0.2ex} 
+\item But we need approximations: 
+\begin{itemize}
+\item Laplace
+\item BIC
+\item Sampling
+\item Variational
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% APPENDIX
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+
+
+\input{texhead}
+
+\usepackage{amssymb}
+
+\newcommand{\nn}{\nonumber}
+% cal
+% bold 
+\newcommand{\bs}{\mathbf{s}}
+\newcommand{\bt}{\mathbf{t}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\bn}{\mathbf{n}}
+\newcommand{\bu}{\mathbf{u}}
+\renewcommand{\bm}{\mathbf{m}}
+\newcommand{\bc}{\mathbf{c}}
+\newcommand{\ba}{\mathbf{a}}
+% bold greek
+\newcommand{\bpi}{\boldsymbol{\pi}}
+% \newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\bSigma}{\boldsymbol{\Sigma}}
+\newcommand{\balpha}{\boldsymbol{\alpha}}
+\newcommand{\brho}{\boldsymbol{\rho}}
+\newcommand{\bnu}{\boldsymbol{\nu}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bepsilon}{\boldsymbol{\epsilon}}
+% \newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bphi}{\boldsymbol{\phi}}
+\newcommand{\bnut}{\tilde{\boldsymbol{\nu}}}
+\newcommand{\etat}{\tilde{\eta}}
+\newcommand{\bub}{\overline{\mathbf{u}}}
+\newcommand{\bphib}{\overline{\bphi}}
+\newcommand{\bthetat}{\tilde{\boldsymbol{\theta}}}
+% other
+\newcommand{\diag}{{\rm diag}}
+\newcommand{\Qtt}{\PineGreen{Q_{\theta}(\theta)}}
+\newcommand{\Qxx}{\Blue{Q_{X}(X)}}
+
+\definecolor{mypine}{rgb}{0.05,0.45,0.05}
+\renewcommand{\Green}{\textcolor{mypine}}
+\newcommand{\Cyan}{\textcolor{cyan}}
+\renewcommand{\PineGreen}{\textcolor{mypine}}
+\newcommand{\DarkGreen}{\textcolor{mypine}}
+
+% \graphicspath{{/home/zoubin/talks/PSFILES/}{/home/zoubin/talks/cmu02inf/forzoubin/}{/nfs/home/zoubin/talks/PSFILES/}{/nfs/home/zoubin/talks/cmu02inf/forzoubin/}}
+

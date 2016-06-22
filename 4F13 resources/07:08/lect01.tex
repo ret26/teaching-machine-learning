@@ -1,0 +1,577 @@
+\input{../../teaching}
+
+\begin{document}
+
+\titleslide{Lecture 1: Introduction to Machine Learning}{January 18th, 2008}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{What is machine learning?}
+
+\begin{itemize}
+\item {\it \Blue{Machine learning} is an interdisciplinary field
+focusing on both the mathematical foundations and practical
+applications of systems that learn, reason and act.}\\[1ex]
+
+\item Other related terms: \Blue{Pattern Recognition}, \Blue{Neural
+  Networks}, \Blue{Data Mining}, \Blue{Statistical Modelling} ...
+
+\item Using ideas from: 
+\Magenta{Statistics}, \Magenta{Computer Science}, \Magenta{Engineering}, 
+\Magenta{Applied Mathematics}, \Magenta{Cognitive Science},
+\Magenta{Psychology}, \Magenta{Computational Neuroscience},
+\Magenta{Economics}  
+
+\item \Blue{The goal of these lectures:} to introduce important
+concepts, models and algorithms in machine learning.
+
+\item \Blue{For more:} We have organised a ``Tutorial Lecture Series on
+  Machine Learning'' with a series of guest lecturers (Thursdays,
+  4-6pm in LT2). Go to
+  {\tt talks.cam.ac.uk}, search for ``Machine Learning'' for various local reading
+  groups, lectures, and seminars.
+
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Warning!}
+
+\vspace{0.5in}
+
+\centerline{\framebox{\parbox{0.8\textwidth}{Lecture 1 will overlap somewhat with
+      my lectures in 3f3: Pattern Processing---but don't despair, a lot of new
+      material later!}}}
+
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{What is machine learning useful for?}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Automatic speech recognition}
+
+\centerline{\includegraphics[width=0.5\textwidth]{speech-viavoice}}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Computer vision: e.g. object, face and handwriting recognition}
+
+\centerline{
+\includegraphics[width=0.6\textwidth]{trainingdigexamples}
+\includegraphics[width=0.4\textwidth]{image-recognition}}
+
+% \centerline{\includegraphics[width=0.7\textwidth]{digit-rec}}
+
+\hfill {\small (NORB image from Yann LeCun)}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Information retrieval}
+
+\centerline{
+\begin{tabular}{c@{\qquad}c}
+\fbox{\includegraphics[height=0.85\textheight]{unsup}}
+&\parbox[b]{30ex}{\centerline{\large\bf Web Pages}\vspace{0.2in}
+Retrieval\\Categorisation\\ Clustering\\ Relations between pages{\vskip 30ex}}
+\end{tabular}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Financial prediction}
+
+\centerline{\includegraphics[height=0.5\textwidth]{finance}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Medical diagnosis}
+
+\centerline{\includegraphics[height=0.4\textwidth]{qmr}}
+
+\centerline{\small (image from Kevin Murphy)}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Bioinformatics}
+
+\centerline{\includegraphics[height=0.6\textheight]{microarray} \hspace{2ex}
+\includegraphics[height=0.6\textheight]{expression-data}}
+
+\vspace{2ex}
+
+e.g.\ modelling gene microarray data, protein structure prediction
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Robotics}
+
+\centerline{\includegraphics[height=0.4\textheight]{stanley1}}
+
+\centerline{\includegraphics[height=0.4\textheight]{stanley2}}
+
+% 2 million dollar prize
+\vspace{2ex}
+
+DARPA \$2m Grand Challenge
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Movie recommendation systems}
+
+\centerline{\includegraphics[height=0.6\textheight]{netflix}}
+
+\vspace{1ex}
+
+Challenge: to improve the accuracy of movie preference predictions
+ 
+Netflix \$1m Prize. Competition started Oct 2, 2006 and still ongoing.\\ 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Three Types of Learning}
+
+Imagine an organism or machine which experiences a series of sensory inputs: 
+%
+\[
+x_1, x_2, x_3, x_4, \ldots
+\] 
+%
+\Green{Supervised learning:} The machine is also given
+\textcolor{red}{desired outputs $y_1, y_2, \ldots$,} and its goal is
+to learn to \Blue{produce the correct output} given a new
+input. \\[1.5ex]
+
+\Green{Unsupervised learning:} The goal of the machine is to \Blue{build
+a model} of $x$ that can be used for reasoning, decision
+making, predicting things, communicating etc. \\[1.5ex]
+
+\Green{Reinforcement learning:} The machine can also produce \Red{actions $a_1,
+a_2, \ldots$} which affect the state of the world, and receives \Red{rewards
+(or punishments) $r_1, r_2, \ldots$}. Its goal is to learn to act in a
+way that \Blue{maximises rewards} in the long term.  \\[2ex]
+
+(In this course we'll focus mostly on unsupervised learning and
+reinforcement learning.)
+
+% review of probabilistic models, relation to coding terminology: Bayes
+% rule, maximum likelihood, MAP, supervised, unsupervised and
+% reinforcement learning
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Key Ingredients}
+
+\Red{Data} \\[1ex]
+
+We will represent data by vectors in some vector space\footnote{This
+assumption can be relaxed.}\\[1ex]
+
+Let $\bfx$ denote a \Blue{data point} with elements $\bfx=(x_1, x_2, \ldots,
+x_D)$\\[1ex] 
+
+The elements of $\bfx$, e.g.\ $x_d$, represent measured (observed)
+\Blue{features} of the data point; $D$ denotes the number of measured
+features of each point. \\[1ex]
+
+The \Blue{data set} $\D$ consists of $N$ data points:
+\[
+\D = \{ \bfx^{(1)}, \bfx^{(2)} \ldots, \bfx^{(N)} \}
+\]
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Key Ingredients}
+
+\vspace{-1ex}
+
+\Red{Data} \\
+
+Let  $\bfx=(x_1, x_2, \ldots, x_D)$ denote a \Blue{data point}, and $
+\D = \{ \bfx^{(1)}, \ldots, \bfx^{(N)} \} $, a \Blue{data
+  set}\\[3ex]
+
+\parbox{0.5\textwidth}{
+\Red{Predictions} \\[-0.5ex]
+
+We are generally interested in predicting something based on the observed
+data. \\
+
+Given $\D$ what can we say about $\bfx^{(N+1)}$?\\
+
+Given $\D$ and $ x^{(N+1)}_1, x^{(N+1)}_2, \ldots,
+x^{(N+1)}_{D-1}$, what can we say about $x^{(N+1)}_{D}$?}
+\parbox{0.45\textwidth}{\centerline{\includegraphics[width=0.4\textwidth]{flix}}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Key Ingredients}
+
+\vspace{-1ex}
+
+\Red{Data} \\
+
+Let  $\bfx=(x_1, x_2, \ldots, x_D)$ be a \Blue{data point}, and $
+\D = \{ \bfx^{(1)}, \bfx^{(2)} \ldots, \bfx^{(N)} \} $, a \Blue{data
+  set}\\[2ex]
+
+\Red{Predictions} \\
+
+We are interested in predicting something based on the observed
+data set. \\
+
+Given $\D$ what can we say about $\bfx^{(N+1)}$?\\
+
+Given $\D$ and $ x^{(N+1)}_1, x^{(N+1)}_2, \ldots,
+x^{(N+1)}_{D-1}$, what can we say about $x^{(N+1)}_{D}$? \\[2ex]
+
+\Red{Model}\\
+
+To make predictions, we need to make some \Blue{\em assumptions}. 
+We can often express these assumptions in the form of a \Blue{model}, with
+some \Blue{parameters}, $\theta$.\\
+
+Given data $\D$, we learn the model parameters $\theta$, from which we
+can predict new data points.\\
+
+The model can often be expressed as a \Blue{\emph probability distribution over
+data points}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Basic Rules of Probability}
+
+\vspace*{-2ex}
+Let $X$ be a random variable taking values $x$ in some set $\cal X$.\\
+
+Probabilities are non-negative $P(X=x)\geq 0\;\forall x$.\\
+
+Probabilities normalise: $\sum_{x \in {\cal X}} P(X=x)=1$ for distributions if $x$ is a
+discrete variable and $\int_{-\infty}^{+\infty} p(x)dx=1$ for
+probability densities over continuous variables\\[2ex]
+
+The \Blue{joint probability} of $X=x$ and $Y=y$ is: $P(X=x,Y=y)$.\\
+
+The \Blue{marginal probability} of $X=x$ is: $P(X=x) = \sum_y P(X=x,y)$,
+assuming $y$ is discrete. I will generally write $P(x)$ to mean
+$P(X=x)$.\\ 
+
+The \Blue{conditional probability} of $x$ given $y$ is:
+$P(x|y)=P(x,y)/P(y)$ \\[2ex]
+
+\Magenta{Bayes Rule:} \vspace*{-3ex}
+\begin{equation*}
+P(x,y)\;=\;P(x)P(y|x)\;=\;P(y)P(x|y)\qquad \Rightarrow \qquad
+\fbox{\Red{$\displaystyle P(y|x) = \frac{P(x|y) P(y)}{P(x)}$}}
+\end{equation*}
+
+\vspace*{-1ex}
+
+{\small {\bf Warning:} I will not be obsessively careful in my use of $p$
+and $P$ for probability density and probability distribution. Should
+be obvious from context.} 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Information, Probability and Entropy}
+
+Information is the \Red{reduction of uncertainty}. How do we measure
+uncertainty?\\
+
+Some axioms (informally):
+%
+\begin{itemize}
+\item if something is certain, its uncertainty = 0 \\[-3.5ex]
+\item uncertainty should be maximum if all choices are equally
+  probable \\[-3.5ex]
+\item uncertainty (information) should add for independent sources
+\end{itemize}
+%
+This leads to a discrete random variable $X$ having uncertainty equal
+to the \Red{entropy} function:
+%
+\[
+\Red{H(X) = - \sum_{x \in {\cal X}} P(X=x) \; \log P(X=x)}
+\]
+%
+measured in \emph{bits} ({\bf bi}nary digi{\bf ts}) if the base $2$
+logarithm is used or \emph{nats} ({\bf na}tural digi{\bf ts})
+if the natural (base $e$) logarithm is used.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Some Definitions Relating to Information Theory}
+
+\begin{itemize}
+\item \Blue{Surprise} (for event $X=x$): $- \log P(X=x)$
+\item \Blue{Entropy} = average surprise: $H(X) = - \sum_{x \in {\cal X}} P(X=x) \; \log P(X=x)$
+\item \Blue{Conditional entropy}
+\[
+H(X|Y) = - \sum_{x} \sum_{y} P(x,y) \log P(x|y)
+\]
+\item \Blue{Mutual information}
+\[
+I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X) = H(X)+H(Y)-H(X,Y)
+\]
+% \im \Blue{Kullback-Leibler divergence} (relative entropy) 
+% \[
+% KL(P(X)\|Q(X)) = 
+% \sum_{x} P(x) \log \frac{P(x)}{Q(x)}
+% \]
+% \im Relation between Mutual information and KL: $I(X;Y) = KL(P(X,Y)\|P(X)P(Y))$
+\item Independent random variables: $P(x,y) = P(x) P(y) \, \forall x \,
+\forall y$
+% \im Conditional independence $X\ci Y|Z$ ($X$ conditionally independent of $Y$ given $Z$) \\ 
+% \phantom{.} \hfill means  $P(X,Y|Z) = P(X|Z) P(Y|Z)$ and $P(X|Y,Z)=P(X|Z)$
+\end{itemize}
+
+How do we relate information theory and probabilistic modelling?
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The source coding problem}
+
+Imagine we have a set of symbols ${\cal X} = \{{\tt a, b, c, d, e, f,
+  g, h}\}$. \\
+
+We want to transmit these symbols over some binary communication
+channel, i.e.\ using a sequence of \Blue{bits} to represent the
+symbols. \\
+
+Since we have 8 symbols, we could use 3 bits per symbol ($2^3 =
+8$). For example:\\
+${\tt a}=000, \, {\tt b}=001, \, {\tt c}=010, \, \ldots, \, {\tt h}=111$ \\[2ex]
+
+\Red{Is this optimal?} \\[2ex]
+
+What if some symbol, {\tt a}, is much more probable than other
+symbols, e.g.\ {\tt f}? \\
+Shouldn't we use fewer bits to transmit the
+more probable symbols? \\[2ex]
+
+Think of a discrete variable $X$ taking on values in $\cal X$,
+having probability distribution $P(X)$. \\[1ex]
+
+How does the probability distribution $P(X)$ relate to the number of
+bits we need for each symbol to optimally and losslessly
+transmit symbols from 
+${\cal X}$? 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Shannon's Source Coding Theorem}
+
+%\vspace*{-3ex}
+A discrete random variable $X$, distributed according to $P(X)$ has
+\Red{entropy}:
+%
+\vspace*{-1ex}
+\[
+\Red{H(X) = - \sum_{x \in \mathcal{X}} P(x) \log_2 P(x)} 
+\] 
+%
+\Red{\bf Shannon's source coding theorem:} Consider a random variable $X$,
+with entropy $H(X)$. A sequence of $n$ independent draws from $X$
+can be losslessly compressed into a minimum expected code of length $n
+{\cal L}$ bits, where $H(X) \le {\cal L} < H(X)+\frac{1}{n}.$ \\[2ex]
+
+If each symbol is given a code length $l(x) = \Green{- \log_2 Q(x)}$
+then the expected per-symbol length ${\cal L}_Q$ of the code is
+%
+\vspace*{-1ex}
+\[
+{\cal L}_Q = \sum_x P(x) l(x) = - \sum_x P(x) \log_2 Q(x) = H(X) + KL(P\|Q),
+\]
+%
+\vspace*{-1ex}
+where the \Blue{relative-entropy} or \Blue{Kullback-Leibler divergence} is 
+%
+\[
+KL(P\|Q) = \sum_x P(x) \log_2 \frac{P(x)}{Q(x)} \ge 0
+\]
+%
+\Green{\bf Take home message:} better probabilistic models $\equiv$ more
+efficient codes
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Some distributions}
+
+\Blue{Univariate Gaussian density} ($x \in \mathbb{R}$):
+\[
+p(x|\mu,\sigma) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left\{
+- \frac{(x - \mu)^2}{2 \sigma^2} \right\}
+\]
+\Blue{Multivariate Gaussian density} ($\bfx \in \mathbb{R}^D$):
+\[
+p(\bfx|\bmu,\Sigma) = |2\pi \Sigma|^{-\frac{1}{2}} \exp \left\{
+-\frac{1}{2} (\bfx - \bmu)\T \Sigma^{-1} 
+(\bfx - \bmu) \right\}
+\]
+\Blue{Bernoulli distribution} ($x \in \{0, 1\}$):
+\[
+p(x|\theta) = \theta^x (1-\theta)^{1-x}
+\]
+\Blue{Discrete distribution} ($x \in \{1, \dots L\}$):
+\[
+p(x|\theta) = \prod_{\ell = 1}^L \theta_\ell^{\delta(x,\ell)} 
+\]
+where $\delta(a,b)=1 $ iff $a=b$, and $\sum_{\ell=1}^L \theta_\ell
+=1$ and $\theta_\ell \ge 0 \, \, \forall \ell$.
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Some distributions (cont)}
+
+\Blue{Uniform} ($x \in [a,b]$):
+\[
+p(x|a,b) = \left\{ 
+\begin{array}{cc} 
+\frac{1}{b-a} & \mbox{if} \, \, a\le x \le b \\
+0 & \mbox{otherwise}
+\end{array}
+\right.
+\]
+
+\Blue{Gamma} ($x \ge 0$):
+\[
+p(x|a,b)= \frac{b^a}{\Gamma(a)} x^{a-1} \exp \{ - b x \} 
+\]
+
+\Blue{Beta} ($x \in [0,1]$):
+\[
+p(x|\alpha,\beta) =
+\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)} x^{\alpha-1}
+(1-x)^{\beta-1} 
+\]
+where $\Gamma(z) = \int_0^\infty t^{z-1} e^{-t} dt$ is the gamma
+function, a generalisation of the factorial: $\Gamma(n) = (n-1)!$. \\
+
+\Blue{Dirichlet} ($\bfp \in \mathbb{R}^D$, $p_d \ge 0$, $\sum_{d=1}^D p_d = 1$):
+\[
+p(\bfp|\balpha) = \frac{\Gamma(\sum_{d=1}^D \alpha_d)}{\prod_{d=1}^D
+\Gamma(\alpha_d)} \prod_{d=1}^D p_d^{\alpha_d -1}
+\]
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Dirichlet Distributions}
+
+\vspace*{-1ex}
+Examples of Dirichlet distributions over $\bfp=(p_1, p_2, p_3)$ which
+can be plotted in 2D since $p_3=1-p_1-p_2$:
+
+\vspace{2ex}
+
+\centerline{
+\includegraphics[width=0.2\textwidth]{dir111}
+\includegraphics[width=0.2\textwidth]{dir222}
+\includegraphics[width=0.2\textwidth]{dir000}
+}
+
+\vspace{1ex}
+
+\centerline{
+\includegraphics[width=0.2\textwidth]{dir202}
+\includegraphics[width=0.2\textwidth]{dir220}
+\includegraphics[width=0.2\textwidth]{dir999}
+}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Other distributions you should know about...}
+
+\Blue{Exponential family of distributions}:
+\[
+P(\bfx|\btheta) = f(\bfx) \; g(\btheta) \exp \left\{
+\bphi(\btheta)^\top \bfu(
+\bfx) \right\}
+\]
+where $\bphi(\btheta)$ is the vector of {\em natural parameters},
+$\bfu$ are {\em sufficient statistics}
+
+
+\begin{itemize}
+\item Binomial 
+\item Multinomial
+\item Poisson
+\item Student t distribution
+\item ...
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{End Notes}
+
+It is very important that you {\em understand} all the material in the
+following cribsheet:\\
+{\small \tt http://learning.eng.cam.ac.uk/zoubin/ml06/cribsheet.pdf}\\
+
+Here is a useful statistics / pattern recognition glossary:\\
+{\small \tt http://research.microsoft.com/$\sim$minka/statlearn/glossary/}\\
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+
+\cut{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\frametitle{Bayesian Learning}
+
+\vspace*{-3ex}
+\Blue{Apply the basic rules of probability to learning from data.}\\
+
+\Green{Data set: ${\cal D}=\{x_1, \ldots, x_n\}$ \hspace{2em} 
+Models: $m$, $m'$ etc.
+\hspace{2em} 
+Model parameters: $\theta$} \\
+Prior probability of models: $P(m)$, $P(m')$ etc.\\
+Prior probabilities of model parameters:  $P(\theta|m)$\\
+Model of data given parameters (likelihood model): $P(x|\theta,m)$\\
+
+If the data are independently and identically distributed then:
+\vspace*{-2ex}
+\[
+P({\cal D}|\theta,m) = \prod_{i=1}^n P(x_i|\theta,m)
+\]
+Posterior probability of model parameters:
+\vspace*{-2ex}
+\[
+P(\theta|{\cal D},m) =\frac{P({\cal D}|\theta,m)P(\theta|m)}{P({\cal
+    D}|m)}
+\]
+Posterior probability of models:
+\vspace*{-2ex}
+\[
+P(m|{\cal D}) = \frac{P(m)P({\cal D}|m)}{P({\cal D})}
+\]
+
+
+}
+
+\end{document}

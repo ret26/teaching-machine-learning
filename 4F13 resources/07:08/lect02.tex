@@ -1,0 +1,942 @@
+\input{../../teaching}
+
+\begin{document}
+
+\titleslide{Lecture 2, 3: PCA, FA and EM}{January 23rd, 25th, 2008}
+
+<<<<<<< .mine
+\begin{frame}
+\frametitle{Latent Variable Models}
+
+Explain correlations in $\bfy$ by assuming a \Blue{generative model} with
+\Blue{latent} (hidden) \Blue{variables} $\bfx$
+
+\vfill 
+
+\begin{minipage}{61mm}
+\centerline{\includegraphics[width=61mm]{genmodel}}
+\end{minipage}
+\begin{minipage}{61mm}
+  \begin{gather*}
+    \bfx \sim p(\bfx|\theta_x)\\[1ex]
+    \bfy|\bfx \sim p(\bfy|\bfx,\theta_y) \\[1ex]
+    p(\bfx,\bfy|\theta_x,\theta_y)=p(\bfy|\bfx,\theta_y)p(\bfx|\theta_x)\\
+    p(\bfy | \theta_x, \theta_y) =
+      \int p(\bfy | \bfx, \theta_y) p(\bfx | \theta_x)d \bfx
+  \end{gather*}
+\end{minipage}
+\end{frame}
+
+\begin{frame}
+\frametitle{Inference and Learning; latent variables and parameters}
+
+Some of the variables in our model are termed \Blue{latent variables}
+and some are called \Blue{parameters}, why?
+\begin{itemize}
+\item each example has separate latent values; so there are many
+\item we usually try to integrate out latent values
+\end{itemize}
+
+The process of finding the distribution over latent variables is called
+\Blue{inference}. The process of finding parameters is called \Blue{learning}.
+
+Ideally, we would want to integrate over all unknown quantities
+\[
+p(\bfy)\;=\;\int\!\!\int p(\bfy|\bfx,\theta)p(\bfx|\theta)p(\theta)d\bfx d\theta,
+\]
+but unfortunately, this is not trivial --- \Red{but we will show you how to do
+this approximately in a few weeks time.}
+
+Today, we concentrate on the simpler task where parameters are treated
+as deterministic quantities
+\[
+p(\bfy)\;\simeq\;p(\bfy|\hat\theta), \text{\ \ where\ \ }
+\hat\theta=\argmax\int p(\bfy|\bfx,\theta)p(\bfx|\theta)d\bfx.
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Factor Analysis}
+
+Latent variable models are useful even when both latent and observed
+variables are Gaussian.
+
+\vfill
+
+\begin{minipage}{43mm}
+\centerline{\includegraphics[width=43mm]{fa2col}}
+\end{minipage} \hspace{5mm}
+\begin{minipage}{70mm}
+Linear generative model: $\displaystyle
+y_d = \sum_{k=1}^K \Lambda_{dk} \; x_k + \epsilon_d$
+
+$\bullet$ $x_k$ are independent ${\cal N}(0,1)$ Gaussian \Red{factors} \\
+$\bullet$ $\epsilon_d$ are
+independent ${\cal N}(0,\Psi_{dd})$ Gaussian \Red{noise} \\
+$\bullet$ $K\!<\!D$
+\end{minipage}
+
+So, $\bfy$ is Gaussian with: $\displaystyle
+p(\bfy) = \int p(\bfx) p(\bfy|\bfx) d\bfx = {\cal N}(0,\Lambda \Lambda\T +
+\Psi) $ \\
+where $\Lambda$ is a $D\times K$ matrix, and $\Psi$ is diagonal.
+
+{\bf Dimensionality Reduction:} Finds a low-dimensional projection of
+high dimensional data that captures the \Blue{correlation structure}
+of the data.
+\end{frame}
+
+\begin{frame}
+\frametitle{Inference in the Factor Analysis Model}
+
+Given an observation, $\bfy$, what is the \emph{distribution} of the
+latent cause?
+
+Use Bayes' rule:
+\[
+p(\bfx|\bfy)\;=\;\frac{p(\bfy|\bfx)p(\bfx)}{p(\bfy)}
+\;\propto\;p(\bfy|\bfx)p(\bfx).
+\]
+In detail:
+\[
+\begin{split}
+p(\bfx|\bfy)\;&\propto\;\Red{p(\bfx)}\;\Blue{p(\bfy|\bfx)}\\
+&=\;\Red{(2\pi)^{-K/2}\exp\!\big[\!-\tfrac{1}{2}\bfx\T\bfx\big]}\;
+\Blue{|2\pi\Psi|^{-1/2}\exp\!\big[\!-\tfrac{1}{2}(\bfy-\Lambda\bfx)\T
+\Psi^{-1}(\bfy-\Lambda\bfx)\big]}\\
+&\propto\;\exp\!\big(\!-\tfrac{1}{2}[\bfx\T\bfx+
+(\bfy-\Lambda\bfx)\T\Psi^{-1}(\bfy-\Lambda \bfx)]\big)\\
+&\propto\;\exp\!\big(\!-\tfrac{1}{2}[\bfx\T
+\Red{(I+\Lambda\T\Psi^{-1}\Lambda)}\bfx-2\bfx\T
+\Blue{\Lambda\T\Psi^{-1}\bfy}]\big)\\
+&\propto\;\exp\!\big(\!-\tfrac{1}{2}[\bfx\T
+\Red{\Sigma^{-1}}\bfx-2\bfx\T\Blue{\Sigma^{-1}\bmu}
++\bmu\T\Sigma^{-1}\bmu]\big)\;\propto\;{\cal N}(\Blue{\bmu},\Red{\Sigma}),
+\end{split}
+\]
+where $\Red{\Sigma=(I+\Lambda\T\Psi^{-1}\Lambda)^{-1}=I-\beta\Lambda}$, $\Blue{\bmu=\Sigma\Lambda\T\Psi^{-1}\bfy=\beta\bfy}$, and $\beta=\Sigma\Lambda\T\Psi^{-1}$.
+
+Note that $\bmu$ is a linear function of $\bfy$ and $\Sigma$ does not
+depend on $\bfy$.
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Learning in the Factor Analysis Model}
+
+Integrating over the latent variables, we obtained:
+\[
+p(\bfy)\;=\;\int p(\bfx) p(\bfy|\bfx) d\bfx = {\cal N}(0,\Lambda \Lambda\T +
+\Psi).
+\]
+Note that Factor Analysis is a restricted form of Gaussian model.
+
+The unrestricted (zero mean) Gaussian model has a closed form solution
+\[
+p(\bfy)\;\sim\;{\cal N}\big(0,\;\textstyle\frac{1}{n}\sum_c\bfy^{(c)}\bfy^{(c)}\T\big),
+\]
+but is no closed form solution for the Factor Analysis model.
+
+We could try to use the gradients to do maximum likelihood wrt the parameters
+$\Lambda$ and $\Psi$.
+
+It turns out that there is a better algorithm for learning (the EM algorithm).
+\end{frame}
+
+\begin{frame}
+\frametitle{Eigenvalues and Eigenvectors}
+
+$\lambda$ is an \Red{eigenvalue} and $\bfx$ is an \Red{eigenvector} of $A$ if:
+%
+\[
+A \bfx\;=\;\lambda \bfx
+\]
+and $\bfx$ is a unit vector ($\bfx^\top \bfx = 1$). \\[1ex]
+
+{\bf Interpretation:} the operation of $A$ in direction $\bfx$ is a scaling
+by $\lambda$. \\[1ex]
+
+The $K$ Principal Components are the $K$ eigenvectors with the largest
+eigenvalues of the \Blue{data covariance matrix} (i.e. $K$ directions with
+the largest variance). \\[1ex]
+
+Note: $\Sigma$ can be decomposed:
+\[
+\Sigma\;=\; U S U^\top,
+\]
+where $S$ is diag($\sigma^2_1, \ldots, \sigma^2_D$) and $U$ is a
+an orthonormal matrix.
+\end{frame}
+
+\begin{frame}
+\frametitle{Example of PCA: Eigenfaces}
+
+\centerline{\includegraphics[width=70mm]{eigfacessmall}}
+
+from \texttt{http://vismod.media.mit.edu/vismod/demos/facerec/basic.html}
+\end{frame}
+
+\begin{frame}
+\frametitle{Principal Components Analysis (PCA)}
+\vskip 3mm
+
+\centerline{\includegraphics[width=43mm]{fa2col}}
+
+Noise variable becomes infinitesimal compared to the scale of the
+data: $\displaystyle \Psi = \lim_{\sigma^2 \rightarrow 0} \sigma^2 I $
+
+Equivalently: reconstruction cost becomes infinite compared to the
+cost of coding the hidden units under the prior.
+\[
+p(\bfx|\bfy)\;=\;{\cal N}(\beta \bfy, I - \beta \Lambda),
+\]
+where
+\[
+\beta\;=\;\lim_{\sigma^2 \rightarrow 0} \Lambda^\top (\Lambda \Lambda^\top +
+\sigma^2 I)^{-1}\;=\;(\Lambda^\top \Lambda)^{-1} \Lambda^\top.
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{From Supervised Learning to PCA: linear autoencoder}
+
+\vspace{4mm}
+\centerline{\includegraphics[width=72mm]{autoencoder}}
+
+\vspace{4mm}
+A linear autoencoder neural network trained to minimise squared error
+learns to perform PCA (Baldi \& Hornik, 1989).
+\end{frame}
+
+\begin{frame}
+\frametitle{FA vs PCA}
+\vfill
+\begin{itemize}
+
+\item PCA is rotationally invariant; FA is not
+
+\item FA is measurement scale invariant; PCA is not
+
+\item FA defines a probabilistic model; PCA does not
+
+\item PCA can be computed in closed form; FA can not 
+\end{itemize}
+\vfill
+\end{frame}
+
+\begin{frame}
+\frametitle{Jensen's Inequality}
+
+\centerline{\includegraphics[height=0.55\textheight]{jensen_demo}}
+
+\vfill
+
+For $\alpha_i \ge 0$, $\sum \alpha_i = 1$ and any $\{x_i > 0\}$
+%
+\[
+\log \big( \sum_i \alpha_i x_i \big)\;\ge\;\sum_i \alpha_i \log(x_i)
+\]
+%
+Equality if and only if $\alpha_i =  1$ for some $i$ (and therefore
+all others are 0).
+\end{frame}
+
+
+\begin{frame}
+\frametitle{The Expectation Maximization (EM) algorithm}
+
+Given a set of observed (visible) variables $V$, a set of unobserved
+(hidden / latent / missing) variables $H$, and model parameters
+$\theta$, optimize the log likelihood:
+%
+\begin{equation}
+{\cal L}(\theta)\;=\;\log p(V|\theta)\;=\;\log \int p(H,V|\theta)dH,
+\end{equation}
+%
+where we have written the marginal for the visibles in terms of an
+integral over the joint distribution for hidden and visible variables.
+
+Using \emph{Jensen's inequality} for \Red{any} distribution of hidden
+states $q(H)$ we have:
+%
+\begin{equation}
+{\cal L}\;=\;\log\int q(H)\frac{p(H,V|\theta)}{q(H)}dH
+\;\geq\;\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH\;=\;{\cal F}(q,\theta),
+\end{equation}
+%
+defining the ${\cal F}(q,\theta)$ functional, which is a \Blue{lower bound}
+on the log likelihood.
+
+In the EM algorithm, we alternately optimize ${\cal F}(q,\theta)$ wrt
+$q$ and $\theta$, and we can prove that this will never decrease
+${\cal L}$.
+\end{frame}
+
+\begin{frame}
+\frametitle{The E and M steps of EM}
+
+The lower bound on the log likelihood:
+%
+\begin{equation}
+{\cal F}(q,\theta)\;=\;\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH\;=\;
+\int q(H)\log p(H,V|\theta)dH+\Green{{\cal H}(q)},
+\end{equation}
+%
+where $\Green{{\cal H}(q)=-\displaystyle\int q(H)\log q(H)dH}$ is the
+\Green{entropy} of $q$. We iteratively alternate:
+%
+\Blue{E step:} optimize ${\cal F}(q,\theta)$ wrt the distribution over hidden
+variables given the parameters:
+\begin{equation}
+\Blue{q^{(k)}(H)}:=\underset{q(H)}{\argmax}\;\;{\cal F}\big(\Blue{q(H)},\Red{\theta^{(k-1)}}\big).
+\end{equation}
+\Blue{M step:} maximize ${\cal F}(q,\theta)$ wrt the parameters given
+the hidden distribution:
+\begin{equation}
+\Blue{\theta^{(k)}}:=\underset{\theta}{\argmax}\;\;
+{\cal F}\big(\Red{q^{(k)}(H)},\Blue{\theta}\big)=
+\underset{\theta}{\argmax}\;\;\int q^{(k)}(H)\log p(H,V|\theta)dH,
+\end{equation}
+which is equivalent to optimizing the expected complete-data likelihood
+$p(H,V|\theta)$, since the \Green{entropy of $q(H)$} does not depend on
+$\theta$.
+\end{frame}
+
+\begin{frame}
+\frametitle{EM as Coordinate Ascent in ${\cal F}$}
+
+\centerline{\includegraphics[width=100mm]{fqtheta}}
+\end{frame}
+
+\begin{frame}
+\frametitle{The EM algorithm never decreases the log likelihood}
+
+The difference between the cost functions:
+%
+\begin{equation*}
+\begin{split}
+\Green{{\cal L}(\theta)-{\cal F}(q,\theta)}\;=&\;\log p(V|\theta)
+-\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH\\
+=&\;\log p(V|\theta)-\int q(H)\log\frac{p(H|V,\theta)p(V|\theta)}{q(H)}dH\\
+=&\;-\int q(H)\log\frac{p(H|V,\theta)}{q(H)}dH\;=\;
+\Green{{\cal KL}\big(q(H),p(H|V,\theta)\big)},
+\end{split}
+\end{equation*}
+%
+is called the Kullback-Liebler divergence; it is non-negative and only
+zero if and only if $q(H)=p(H|V,\theta)$ (thus this is the E
+step). Although we are working with the \Blue{wrong cost function}, the
+likelihood is still increased in every iteration:
+%
+\begin{equation*}
+{\cal L}\big(\theta^{(k-1)}\big)\;
+\underset{\Blue{\mbox{E step}}}{=}
+\;{\cal F}\big(q^{(k)},\theta^{(k-1)}\big)
+\underset{\mbox{\Blue{M step}}}{\leq}
+\;{\cal F}\big(q^{(k)},\theta^{(k)}\big)
+\underset{\mbox{\Blue{Jensen}}}{\leq}
+\;{\cal L}\big(\theta^{(k)}\big),
+\end{equation*}
+where the first equality holds because of the E step, and the first inequality
+comes from the M step and the final inequality from Jensen. Usually EM
+converges to a local optimum of ${\cal L}$ (although there are exceptions).
+\end{frame}
+
+
+=======
+\begin{frame}
+\frametitle{Latent Variable Models}
+
+Explain correlations in $\bfy$ by assuming a \Blue{generative model} with
+\Blue{latent} (hidden) \Blue{variables} $\bfx$
+
+\vfill 
+
+\begin{minipage}{61mm}
+\centerline{\includegraphics[width=61mm]{genmodel}}
+\end{minipage}
+\begin{minipage}{61mm}
+  \begin{gather*}
+    \bfx \sim p(\bfx|\theta_x)\\[1ex]
+    \bfy|\bfx \sim p(\bfy|\bfx,\theta_y) \\[1ex]
+    p(\bfx,\bfy|\theta_x,\theta_y)=p(\bfy|\bfx,\theta_y)p(\bfx|\theta_x)\\
+    p(\bfy | \theta_x, \theta_y) =
+      \int p(\bfy | \bfx, \theta_y) p(\bfx | \theta_x)d \bfx
+  \end{gather*}
+\end{minipage}
+\end{frame}
+
+\begin{frame}
+\frametitle{Inference and Learning; latent variables and parameters}
+
+Some of the variables in our model are termed \Blue{latent variables}
+and some are called \Blue{parameters}, why?
+\begin{itemize}
+\item each example has separate latent values; so there are many
+\item we usually try to integrate out latent values
+\end{itemize}
+
+The process of finding the distribution over latent variables is called
+\Blue{inference}. The process of finding parameters is called \Blue{learning}.
+
+Ideally, we would want to integrate over all unknown quantities
+\[
+p(\bfy)\;=\;\int\!\!\int p(\bfy|\bfx,\theta)p(\bfx|\theta)p(\theta)d\bfx d\theta,
+\]
+but unfortunately, this is not trivial --- \Red{but we will show you how to do
+this approximately in a few weeks time.}
+
+Today, we concentrate on the simpler task where parameters are treated
+as deterministic quantities
+\[
+p(\bfy)\;\simeq\;p(\bfy|\hat\theta), \text{\ \ where\ \ }
+\hat\theta=\argmax\int p(\bfy|\bfx,\theta)p(\bfx|\theta)d\bfx.
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Factor Analysis}
+
+Latent variable models are useful even when both latent and observed
+variables are Gaussian.
+
+\vfill
+
+\begin{minipage}{43mm}
+\centerline{\includegraphics[width=43mm]{fa2col}}
+\end{minipage} \hspace{5mm}
+\begin{minipage}{70mm}
+Linear generative model: $\displaystyle
+y_d = \sum_{k=1}^K \Lambda_{dk} \; x_k + \epsilon_d$
+
+$\bullet$ $x_k$ are independent ${\cal N}(0,1)$ Gaussian \Red{factors} \\
+$\bullet$ $\epsilon_d$ are
+independent ${\cal N}(0,\Psi_{dd})$ Gaussian \Red{noise} \\
+$\bullet$ $K\!<\!D$
+\end{minipage}
+
+So, $\bfy$ is Gaussian with: $\displaystyle
+p(\bfy) = \int p(\bfx) p(\bfy|\bfx) d\bfx = {\cal N}(0,\Lambda \Lambda\T +
+\Psi) $ \\
+where $\Lambda$ is a $D\times K$ matrix, and $\Psi$ is diagonal.
+
+{\bf Dimensionality Reduction:} Finds a low-dimensional projection of
+high dimensional data that captures the \Blue{correlation structure}
+of the data.
+\end{frame}
+
+\begin{frame}
+\frametitle{Inference in the Factor Analysis Model}
+
+Given an observation, $\bfy$, what is the \emph{distribution} of the
+latent cause?
+
+Use Bayes' rule:
+\[
+p(\bfx|\bfy)\;=\;\frac{p(\bfy|\bfx)p(\bfx)}{p(\bfy)}
+\;\propto\;p(\bfy|\bfx)p(\bfx).
+\]
+In detail:
+\[
+\begin{split}
+p(\bfx|\bfy)\;&\propto\;\Red{p(\bfx)}\;\Blue{p(\bfy|\bfx)}\\
+&=\;\Red{(2\pi)^{-K/2}\exp\!\big[\!-\tfrac{1}{2}\bfx\T\bfx\big]}\;
+\Blue{|2\pi\Psi|^{-1/2}\exp\!\big[\!-\tfrac{1}{2}(\bfy-\Lambda\bfx)\T
+\Psi^{-1}(\bfy-\Lambda\bfx)\big]}\\
+&\propto\;\exp\!\big(\!-\tfrac{1}{2}[\bfx\T\bfx+
+(\bfy-\Lambda\bfx)\T\Psi^{-1}(\bfy-\Lambda \bfx)]\big)\\
+&\propto\;\exp\!\big(\!-\tfrac{1}{2}[\bfx\T
+\Red{(I+\Lambda\T\Psi^{-1}\Lambda)}\bfx-2\bfx\T
+\Blue{\Lambda\T\Psi^{-1}\bfy}]\big)\\
+&\propto\;\exp\!\big(\!-\tfrac{1}{2}[\bfx\T
+\Red{\Sigma^{-1}}\bfx-2\bfx\T\Blue{\Sigma^{-1}\bmu}
++\bmu\T\Sigma^{-1}\bmu]\big)\;\propto\;{\cal N}(\Blue{\bmu},\Red{\Sigma}),
+\end{split}
+\]
+where $\Red{\Sigma=(I+\Lambda\T\Psi^{-1}\Lambda)^{-1}=I-\beta\Lambda}$, $\Blue{\bmu=\Sigma\Lambda\T\Psi^{-1}\bfy=\beta\bfy}$, and $\beta=\Sigma\Lambda\T\Psi^{-1}$.
+
+Note that $\bmu$ is a linear function of $\bfy$ and $\Sigma$ does not
+depend on $\bfy$.
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Learning in the Factor Analysis Model}
+
+Integrating over the latent variables, we obtained:
+\[
+p(\bfy)\;=\;\int p(\bfx) p(\bfy|\bfx) d\bfx = {\cal N}(0,\Lambda \Lambda\T +
+\Psi).
+\]
+Note that Factor Analysis is a restricted form of Gaussian model.
+
+The unrestricted (zero mean) Gaussian model has a closed form solution
+\[
+p(\bfy)\;\sim\;{\cal N}\big(0,\;\textstyle\frac{1}{n}\sum_c\bfy^{(c)}\bfy^{(c)}\T\big),
+\]
+but is no closed form solution for the Factor Analysis model.
+
+We could try to use the gradients to do maximum likelihood wrt the parameters
+$\Lambda$ and $\Psi$.
+
+It turns out that there is a better algorithm for learning (the EM algorithm).
+\end{frame}
+
+\begin{frame}
+\frametitle{Eigenvalues and Eigenvectors}
+
+$\lambda$ is an \Red{eigenvalue} and $\bfx$ is an \Red{eigenvector} of $A$ if:
+%
+\[
+A \bfx\;=\;\lambda \bfx
+\]
+and $\bfx$ is a unit vector ($\bfx^\top \bfx = 1$). \\[1ex]
+
+{\bf Interpretation:} the operation of $A$ in direction $\bfx$ is a scaling
+by $\lambda$. \\[1ex]
+
+The $K$ Principal Components are the $K$ eigenvectors with the largest
+eigenvalues of the \Blue{data covariance matrix} (i.e. $K$ directions with
+the largest variance). \\[1ex]
+
+Note: $\Sigma$ can be decomposed:
+\[
+\Sigma\;=\; U S U^\top,
+\]
+where $S$ is diag($\sigma^2_1, \ldots, \sigma^2_D$) and $U$ is a
+an orthonormal matrix.
+\end{frame}
+
+\begin{frame}
+\frametitle{Example of PCA: Eigenfaces}
+
+\centerline{\includegraphics[width=70mm]{eigfacessmall}}
+
+from \texttt{http://vismod.media.mit.edu/vismod/demos/facerec/basic.html}
+\end{frame}
+
+\begin{frame}
+\frametitle{Principal Components Analysis (PCA)}
+\vskip 3mm
+
+\centerline{\includegraphics[width=43mm]{fa2col}}
+
+Noise variable becomes infinitesimal compared to the scale of the
+data: $\displaystyle \Psi = \lim_{\sigma^2 \rightarrow 0} \sigma^2 I $
+
+Equivalently: reconstruction cost becomes infinite compared to the
+cost of coding the hidden units under the prior.
+\[
+p(\bfx|\bfy)\;=\;{\cal N}(\beta \bfy, I - \beta \Lambda),
+\]
+where
+\[
+\beta\;=\;\lim_{\sigma^2 \rightarrow 0} \Lambda^\top (\Lambda \Lambda^\top +
+\sigma^2 I)^{-1}\;=\;(\Lambda^\top \Lambda)^{-1} \Lambda^\top.
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{From Supervised Learning to PCA: linear autoencoder}
+
+\vspace{4mm}
+\centerline{\includegraphics[width=72mm]{autoencoder}}
+
+\vspace{4mm}
+A linear autoencoder neural network trained to minimise squared error
+learns to perform PCA (Baldi \& Hornik, 1989).
+\end{frame}
+
+\begin{frame}
+\frametitle{FA vs PCA}
+\vfill
+\begin{itemize}
+
+\item PCA is rotationally invariant; FA is not
+
+\item FA is measurement scale invariant; PCA is not
+
+\item FA defines a probabilistic model; PCA does not
+
+\item PCA can be computed in closed form; FA can not 
+\end{itemize}
+\vfill
+\end{frame}
+
+\begin{frame}
+\frametitle{Jensen's Inequality}
+
+\centerline{\includegraphics[height=0.55\textheight]{jensen_demo}}
+
+\vfill
+
+For $\alpha_i \ge 0$, $\sum \alpha_i = 1$ and any $\{x_i > 0\}$
+%
+\[
+\log \big( \sum_i \alpha_i x_i \big)\;\ge\;\sum_i \alpha_i \log(x_i)
+\]
+%
+Equality if and only if $\alpha_i =  1$ for some $i$ (and therefore
+all others are 0).
+\end{frame}
+
+
+\begin{frame}
+\frametitle{The Expectation Maximization (EM) algorithm}
+
+Given a set of observed (visible) variables $V$, a set of unobserved
+(hidden / latent / missing) variables $H$, and model parameters
+$\theta$, optimize the log likelihood:
+%
+\begin{equation}
+{\cal L}(\theta)\;=\;\log p(V|\theta)\;=\;\log \int p(H,V|\theta)dH,
+\end{equation}
+%
+where we have written the marginal for the visibles in terms of an
+integral over the joint distribution for hidden and visible variables.
+
+Using \emph{Jensen's inequality} for \Red{any} distribution of hidden
+states $q(H)$ we have:
+%
+\begin{equation}
+{\cal L}\;=\;\log\int q(H)\frac{p(H,V|\theta)}{q(H)}dH
+\;\geq\;\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH\;=\;{\cal F}(q,\theta),
+\end{equation}
+%
+defining the ${\cal F}(q,\theta)$ functional, which is a \Blue{lower bound}
+on the log likelihood.
+
+In the EM algorithm, we alternately optimize ${\cal F}(q,\theta)$ wrt
+$q$ and $\theta$, and we can prove that this will never decrease
+${\cal L}$.
+\end{frame}
+
+\begin{frame}
+\frametitle{The E and M steps of EM}
+
+The lower bound on the log likelihood:
+%
+\begin{equation}
+{\cal F}(q,\theta)\;=\;\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH\;=\;
+\int q(H)\log p(H,V|\theta)dH+\Green{{\cal H}(q)},
+\end{equation}
+%
+where $\Green{{\cal H}(q)=-\displaystyle\int q(H)\log q(H)dH}$ is the
+\Green{entropy} of $q$. We iteratively alternate:
+%
+\Blue{E step:} optimize ${\cal F}(q,\theta)$ wrt the distribution over hidden
+variables given the parameters:
+\begin{equation}
+\Blue{q^{(k)}(H)}:=\underset{q(H)}{\argmax}\;\;{\cal F}\big(\Blue{q(H)},\Red{\theta^{(k-1)}}\big).
+\end{equation}
+\Blue{M step:} maximize ${\cal F}(q,\theta)$ wrt the parameters given
+the hidden distribution:
+\begin{equation}
+\Blue{\theta^{(k)}}:=\underset{\theta}{\argmax}\;\;
+{\cal F}\big(\Red{q^{(k)}(H)},\Blue{\theta}\big)=
+\underset{\theta}{\argmax}\;\;\int q^{(k)}(H)\log p(H,V|\theta)dH,
+\end{equation}
+which is equivalent to optimizing the expected complete-data likelihood
+$p(H,V|\theta)$, since the \Green{entropy of $q(H)$} does not depend on
+$\theta$.
+\end{frame}
+
+\begin{frame}
+\frametitle{EM as Coordinate Ascent in ${\cal F}$}
+
+\centerline{\includegraphics[width=100mm]{fqtheta}}
+\end{frame}
+
+\begin{frame}
+\frametitle{The EM algorithm never decreases the log likelihood}
+
+The difference between the cost functions:
+%
+\begin{equation*}
+\begin{split}
+\Green{{\cal L}(\theta)-{\cal F}(q,\theta)}\;=&\;\log p(V|\theta)
+-\int q(H)\log\frac{p(H,V|\theta)}{q(H)}dH\\
+=&\;\log p(V|\theta)-\int q(H)\log\frac{p(H|V,\theta)p(V|\theta)}{q(H)}dH\\
+=&\;-\int q(H)\log\frac{p(H|V,\theta)}{q(H)}dH\;=\;
+\Green{{\cal KL}\big(q(H),p(H|V,\theta)\big)},
+\end{split}
+\end{equation*}
+%
+is called the Kullback-Liebler divergence; it is non-negative and only
+zero if and only if $q(H)=p(H|V,\theta)$ (thus this is the E
+step). Although we are working with the \Blue{wrong cost function}, the
+likelihood is still increased in every iteration:
+%
+\begin{equation*}
+{\cal L}\big(\theta^{(k-1)}\big)\;
+\underset{\Blue{\mbox{E step}}}{=}
+\;{\cal F}\big(q^{(k)},\theta^{(k-1)}\big)
+\underset{\mbox{\Blue{M step}}}{\leq}
+\;{\cal F}\big(q^{(k)},\theta^{(k)}\big)
+\underset{\mbox{\Blue{Jensen}}}{\leq}
+\;{\cal L}\big(\theta^{(k)}\big),
+\end{equation*}
+where the first equality holds because of the E step, and the first inequality
+comes from the M step and the final inequality from Jensen. Usually EM
+converges to a local optimum of ${\cal L}$ (although there are exceptions).
+\end{frame}
+
+
+\begin{frame}
+\frametitle{EM for Factor Analysis}
+
+\begin{minipage}{36mm}
+\centerline{\includegraphics[width=30mm]{fa2col}}
+\end{minipage} \hspace{6mm}
+\begin{minipage}{80mm}
+The model for $\bfy$: \\
+$ p(\bfy|\theta) = \int p(\bfx|\theta) p(\bfy|\bfx,\theta) d\bfx = {\cal
+  N}(0,\Lambda \Lambda^\top + \Psi) $ \\
+Model parameters: $\theta = \{ \Lambda, \Psi \}$.
+\end{minipage}
+
+\vspace{0.3in}
+
+{\bf E step:} For each data point $\bfy_c$, compute the posterior
+distribution of hidden factors given the observed data:
+$q_c(\bfx_c)=p(\bfx_c|\bfy_c,\theta^{(t)})$. \\[1ex]
+
+{\bf M step:} Find the $\theta^{(t+1)}$ that maximises ${\cal F}(q,\theta)$:
+\[
+\begin{split}
+{\cal F}(q,\theta)\;&=\;\sum_c  \int q_c(\bfx_c)\Big[\log p(\bfx_c|\theta)+
+\log p(\bfy_c|\bfx_c,\theta) - \log q_c(\bfx_c) \Big]  d\bfx_c \\
+&=\;\sum_c \int q_c(\bfx) \Big[ \log p(\bfx_c|\theta) +
+\log p(\bfy_c|\bfx_c,\theta) \Big] d\bfx + \text{const.}
+\end{split}
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{The M step for Factor Analysis}
+
+{\bf M step:} Find $\theta^{(t+1)}$ maximising ${\cal F} = \sum_c \int
+q_c(\bfx)\left[\log p(\bfx|\theta)+\log p(\bfy_c|\bfx,\theta) \right] d\bfx$.
+%
+\[
+\begin{split}
+\Red{\log p(\bfx|\theta)}&+\Blue{\log p(\bfy_c|\bfx,\theta)}\\
+&=\;\mbox{const}-\Red{\tfrac{1}{2}\bfx_c^\top\bfx_c}-\Blue{\tfrac{1}{2}\log|\Psi|
+-\tfrac{1}{2}(\bfy_c-\Lambda\bfx_c)^\top\Psi^{-1}(\bfy_c-\Lambda \bfx_c)} \\
+&=\;\mbox{const'}-\tfrac{1}{2}\log|\Psi|-\tfrac{1}{2}
+[\bfy_c^\top\Psi^{-1}\bfy_c-2\bfy_c^\top\Psi^{-1}\Lambda\bfx_c+
+\bfx_c^\top\Lambda^\top\Psi^{-1}\Lambda\bfx_c] \\
+&=\;\mbox{const'}-\tfrac{1}{2}\log|\Psi|-\tfrac{1}{2}[\bfy_c^\top\Psi^{-1}
+\bfy_c-2\bfy_c^\top\Psi^{-1}\Lambda\bfx_c+
+\trace{\Lambda^\top\Psi^{-1}\Lambda \bfx_c\bfx_c^\top}]
+\end{split}
+\]
+%
+Taking expectations over $q_c(\bfx_c)$\ldots
+%
+\[
+=\;\mbox{const'}-\tfrac{1}{2}\log|\Psi|-\tfrac{1}{2}\big[\bfy_c^\top\Psi^{-1}
+\bfy_c-2\bfy_c^\top\Psi^{-1}\Lambda\bmu_c+\trace{\Lambda^\top
+\Psi^{-1} \Lambda (\bmu_c \bmu_c^\top + \Sigma)}\big].
+\]
+%
+Note that we don't need to know everything about $q$, just the
+expectations of $\bfx$ and $\bfx\bfx^\top$ under $q$ (i.e.\ the expected
+sufficient statistics).
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The M step for Factor Analysis (cont.)}
+
+$\displaystyle{\cal F}=\mbox{const'}-\frac{N}{2} \log |\Psi| -
+\tfrac{1}{2} \sum_c \left[ \bfy_c^\top \Psi^{-1} \bfy_c - 2 \bfy_c^\top \Psi^{-1}
+  \Lambda \bmu_c  + \operatorname{trace}(\Lambda^\top \Psi^{-1} \Lambda (\bmu_c
+  \bmu_c^\top + \Sigma))\right] $ \\
+Taking derivatives w.r.t. $\Lambda$ and $\Psi^{-1}$, using
+$\tfrac{\partial\trace{AB}}{\partial B}=A^\top$ and
+$\tfrac{\partial\log|A|}{\partial A}=A^{-\top}$:
+%
+\[
+\begin{split}
+\frac{\partial{\cal F}}{\partial\Lambda}\;&=\;
+\Psi^{-1}\sum_c\bfy_c\bmu_c^\top -
+\Psi^{-1} \Lambda \Big(N \Sigma + \sum_c \bmu_c \bmu_c^\top \Big)\;=\;0 \\
+\Blue{\Lambda}\;&\Blue{=\;\Big(}\Red{N\Sigma+}
+\Blue{\sum_c \bmu_c \bmu_c^\top \Big)^{-1}\sum_c \bfy_c \bmu_c^\top}\\
+\frac{\partial{\cal F}}{\partial\Psi^{-1}}\;&=\;\frac{N}{2}\Psi
+-\frac{1}{2}\sum_c\left[ \bfy_c \bfy_c^\top - \Lambda \bmu_c \bfy_c^\top - \bfy
+_c \bmu_c^\top \Lambda^\top + \Lambda (\bmu_c
+ \bmu_c^\top + \Sigma ) \Lambda^\top\right] \\
+\Psi\;&=\;\frac{1}{N} \sum_c \left[ \bfy_c \bfy_c^\top - \Lambda \bmu_c
+  \bfy_c^\top - \bfy_c \bmu_c^\top \Lambda^\top + \Lambda (\bmu_c \bmu_c^\top
+ + \Sigma ) \Lambda^\top\right] \\
+&\Blue{=\;\Red{\Lambda \Sigma \Lambda^\top +}\;\frac{1}{N} \sum_c
+(\bfy_c - \Lambda
+\bmu_c) (\bfy_c - \Lambda \bmu_c)^\top} \hspace{0.6in} \mbox{(squared residual
+s)}
+\end{split}
+\]
+%
+Note: we should actually only take derivarives w.r.t.\ $\Psi_{dd}$ since
+$\Psi$ is diagonal. \\[-0.3ex] When $\Red{\Sigma \rightarrow 0}$ these become
+the equations for linear regression!
+\end{frame}
+
+\begin{frame}
+\frametitle{Limitations and Mixtures}
+
+So far, we have assumed that the data is reasonably well approximated by a
+Gaussian.
+
+\centerline{\includegraphics[width=\textwidth]{mog-approximations}}
+
+A mixture distribution has a single discrete latent variable:
+\[
+s_i\;\sim\;{\rm Discrete}[\boldsymbol\pi] \hspace{5mm}
+\bfy_i | s_i\;\sim\;p(\bfy_i|\theta_{s_i})
+\]
+
+Mixtures arise naturally when observations from different sources have
+been collated.
+
+They can also be used to \emph{approximate} arbitrary distributions.
+\end{frame}
+
+\begin{frame}
+\frametitle{Clustering with MoG}
+
+\centerline{\includegraphics[height=0.85\textheight]{mog-cluster-data}}
+\end{frame}
+
+\begin{frame}
+\frametitle{Clustering with MoG}
+
+\centerline{\includegraphics[height=0.85\textheight]{mog-cluster-ellipses}}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Likelihood for the Mixture of Gaussians model}
+
+Likelihood:
+%
+\[
+\begin{split}
+p(\bfy_1,\ldots,\bfy_n|\theta)\;=&\;\prod_{c=1}^n\sum_{i=1}^k\pi_i\;{\cal N}
+(\bfy_c|\bmu_i,\Sigma_i)\\
+=&\;\prod_{c=1}^n\sum_{i=1}^k\pi_i\;|2\pi\Sigma_i|^{-1/2}\exp\big(-
+(\bfy_c-\bmu_i)^\top\Sigma_i^{-1}(\bfy_c-\bmu_i)\big).
+\end{split}
+\]
+Here, $\pi_i$ are the \Blue{mixing proportions}, (non-negative, sum to one) and
+the parameters are collected in
+$\theta=(\boldsymbol{\pi},\bmu_1,\ldots,\bmu_k,\Sigma_1,\ldots,\Sigma_k)$.
+\end{frame}
+
+\begin{frame}
+\frametitle{Mixture of Gaussians, E-step}
+
+The likelihood (for a single data point) in the mixture of Gaussians model is
+%
+\[
+p(\bfy|\theta)\;=\;\sum_{j=1}^kp(\bfy,h|\theta)\;=\;
+\sum_{j=1}^kp(h=j|\theta)p(\bfy|h=j,\theta),
+\]
+%
+where
+$\theta=(\pi_1,\ldots,\pi_k,\bmu_1,\ldots,\bmu_k,\Sigma_1,\ldots,\Sigma_k)$
+are the parameters, and $h$ is the hidden, or latent, variable.
+
+In the E-step we maximize the lower bound functional ${\cal
+  F}(\Blue{q(H)},\Red{\theta})$ wrt $\Blue{q(H)}$ for fixed $\Red{\theta}$. We
+have seen that this is equivalent to setting $\Blue{q(H)}$ equal to the
+posterior:
+%
+\[
+\Blue{q(H)}\;=\;p(h|\bfy,\theta)\;=\;
+\frac{p(\bfy|h,\theta)p(h|\theta)}{p(\bfy|\theta)}
+\;\propto\;p(\bfy|h,\theta)p(h|\theta).
+\]
+%
+Thus, the \emph{responsibilities} are:
+%
+\[
+\Blue{r_j}\;=\;p(h=j|\bfy,\theta)\;\propto\;\pi_j|\Sigma_j|^{1/2}
+\exp\Big(\!-(\bfy-\bmu_j)^\top\Sigma_j^{-1}(\bfy-\bmu_j)/2\Big),
+\]
+%
+normalized such that $\sum_jr_j=1$. For multiple data points, responsibilities
+are computed analogously: $r_{cj}=p(h_c=j|\bfy_c,\theta)$.
+\end{frame}
+
+\begin{frame}
+\frametitle{Mixture of Gaussians, M-step}
+
+In the M-step, we maximize the lower bound functional ${\cal
+  F}(\Red{q(H)},\Blue{\theta})$ wrt. $\Blue{\theta}$. Recall, that this is 
+equivalent to maximizing
+%
+\[
+E(\theta)\;=\;\int q(H)\log\big(p(H,V|\theta)\big)dH\;=
+\;\int q(H)\sum_c\log\big(p(H_c,V_c|\theta)\big)dH,
+\]
+%
+for a fixed $q(H)$. For mixtures of Gaussians:
+%
+\[
+E(\theta)\;=\;\sum_{c,j}r_{cj}\Big[\log(\pi_j)-\tfrac{1}{2}\log|\Sigma_j|
+-(\bfy_c-\bmu_j)^\top\Sigma_j^{-1}(\bfy_c-\bmu_j)/2\Big].
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Mixture of Gaussians, M-step, cont.}
+
+Optimizing wrt the $\Red{\theta}$ parameters (and $S_j=\Sigma_j^{-1}$):
+%
+\[
+\begin{split}
+\frac{\partial E(\theta)}{\partial \bmu_j}\;&=\;\sum_c
+r_{cj}\Sigma_j^{-1}(\bfy_c-\bmu)\;=\;{\bf 0}\;\;\Longrightarrow\;\;
+\bmu_j\;=\;\sum_c r_{cj}\bfy_c/(\sum_c r_{cj})\\
+\frac{\partial E(\theta)}{\partial
+  S_j}\;&=\;\frac{1}{2}\sum_cr_{cj}\Big[S_j^{-1}-(\bfy_c-\bmu_j)(\bfy_c-\bmu_j
+)^\top\Big]\;=\;{\bf  0}\\
+&\hspace{20mm}\Longrightarrow\;\;
+\Sigma_j\;=\;\sum_{c=1}^nr_{cj}(\bfy_c-\bmu_j)(\bfy_c-\bmu_j)^\top/(\sum_c r_{
+cj}),\\
+\frac{\partial E(\theta)}{\partial \pi_j}\;&=\;\sum_c\frac{r_{cj}}{\pi_j}-
+\lambda\;=0\;\;\Longrightarrow\;\;\pi_j\;=\;\sum_cr_{cj}/(\sum_{c,j}r_{cj}),
+\end{split}
+\]
+%
+where $\lambda$ is the Lagrange multiplier which ensures that the mixture
+normalizes $\sum_j\pi_j=1$.
+\end{frame}
+
+\begin{frame}
+\frametitle{Mixture of Gaussian issues}
+
+The EM algorithm converges to a \emph{local} maximum of the likelihood.
+There may be many local maxima.
+
+There could be many bad local maxima, ie with low values of the likelihood.
+
+\Blue{In fact, we are not interested in the global optimum!}
+
+Another problem: ``How many mixture components?''
+\end{frame}
+
+
+
+
+
+
+>>>>>>> .r224
+\end{document}

@@ -1,0 +1,607 @@
+\input{../../teaching}
+
+\newcommand{\vv}{{\mathbf v}}
+\newcommand{\B}{{\cal B}}
+\newcommand{\cP}{{\mathcal P}}
+\newcommand{\cR}{{\mathcal R}}
+\newcommand{\xx}{{\mathbf x}}
+\newcommand{\uu}{{\mathbf u}}
+
+\begin{document}
+
+\titleslide{Lecture 13, 14, 15: Reinforcement Learning}{February 29th, March 5th and 7th, 2008}
+
+\begin{frame}
+\frametitle{Intelligent Behaviour?}
+
+Imagine a creature/agent (human/animal/machine) which receives sensory
+inputs and can take some actions in an environment:
+
+\centerline{\includegraphics[width=2.1in]{caricature}}
+
+Assume that the creature also receives rewards (or penalties/losses)
+from the environment.\\
+
+The goal of the creature is to maximise the rewards it receives (or
+equivalently minimise the losses). \\
+
+\Green{A theory for choosing actions that minimize losses is a theory for how
+to behave optimally... }
+\end{frame}
+
+\begin{frame}
+\frametitle{Bayesian Decision Theory}
+
+{\bf Bayesian decision theory} deals with the problem of making
+optimal decisions---that is, decisions or actions that minimize an
+expected loss. 
+
+\begin{itemize}
+\item Let's say we have a choice of taking one of $k$ possible
+\Red{\bf actions} $a_1 \ldots a_k$.
+
+\item Assume that the world can be in one of $m$ different
+\Red{\bf states} $s_1,\ldots, s_m$.
+
+\item If we take action $a_i$ and the world is in state $s_j$ we incur a
+\Red{\bf loss} $\ell_{ij}$
+
+\item Given all the observed data $\D$ and prior background knowledge $\B$ ,
+our \Red{\bf beliefs} about the state of the world are summarized by
+$p(s|\D,\B)$.
+
+
+\item \PineGreen{\em The optimal action is the one which is expected to minimize 
+loss (or maximize utility)}:
+\[
+a^*  = \underset{a_i}{\argmin} \sum_{j=1}^m \ell_{ij}\, p(s_j|\D,\B) 
+\]
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{ll}
+Bayesian sequential decision theory & \Blue{(statistics)} \\
+Optimal control theory & \Blue{(engineering)} \\
+Reinforcement learning & \Blue{(computer science / psychology)}
+\end{tabular}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{A simple example}
+
+Assume we have two actions:
+
+$a_1$ : play \\
+$a_2$ : don't play 
+
+And two outcomes:
+
+$s_1$ : win lottery \\
+$s_2$ : don't win lottery
+
+Optimal action:
+\[
+a^*  = \underset{a_i}{\argmin} \sum_{j=1}^m \ell_{ij}\, p(s_j|a_i,\B) 
+\]
+
+\[
+\begin{array}{ll} \hline
+p(s_1|a_1,\B) = 0.000001 & \ell_{11} = -100000 \\
+p(s_2|a_1,\B) = 0.999999 & \ell_{12} = +0.9 \\
+p(s_1|a_2,\B) = 0 & \ell_{21}= 0 \\
+p(s_2|a_2,\B) = 1 & \ell_{22} = 0 \\ \hline
+\end{array}
+\]
+{\em What is the optimal action for this decision problem?}
+\end{frame}
+
+\begin{frame}
+\frametitle{Comments about the above framework}
+
+\PineGreen{\em The optimal action is the one which is expected to minimize 
+loss (or maximize utility)}:
+\[
+a^*\;=\;\underset{a_i}{\argmin} \sum_{j=1}^m \ell_{ij}\, p(s_j|\D,\B) 
+\]
+
+\begin{itemize}
+\item This is a theory for how to make a \Blue{\em single decision}. How do
+  we make a \Blue{\em sequence of decisions} in order to achieve some long-term
+  goals/rewards?
+\item This assumes that we \Blue{\em know} what the losses are for each
+  action-state pair. The losses may in fact have to be learned from experience.
+\item We need a model for how the observed data $\D$ relates to the
+  states of the world $s$.
+\item It may be impossible to \Blue{\em enumerate} all possible
+  actions and states. What about continuous state and action spaces?
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Markov Decision Problems (MDPs)}
+
+\Blue{States}: $s_t$\\
+\Blue{Actions}: $a_t$\\
+\Blue{Rewards}: $r_t$
+
+The variable $s_t$ is the state of the world and agent at time $t$
+
+The agent takes action $a_t$ and receives reward $r_t$ (or loss, if
+you like to think negatively...)
+
+The reward is assumed to depend on the state and the action.
+
+\centerline{\includegraphics[width=2.1in]{mdp}}
+
+\Green{Markov property: \hfill $
+p(s_{t+1},r_{t}|s_t,a_t,s_{t-1},a_{t-1},r_{t-1}, \ldots) = 
+p(s_{t+1},r_{t}|s_t, a_t) $ \hfill}
+\end{frame}
+
+\begin{frame}
+\frametitle{Markov Decision Problems (MDPs)}
+
+\centerline{\includegraphics[width=2.1in]{mdp2}}
+
+The world is characterized by
+
+\Blue{Transition Probabilities:} \hspace{2em}
+ $ \cP_{ss'}^a = p(s_{t+1}=s'|s_t=s,a_t=a) $ \\[1ex]
+
+\Blue{Expected rewards:} \hspace{2em}
+ $ \cR_{ss'}^a = \E[r_{t+1}|s_t=s,a_t=a,s_{t+1}=s'] $ \\[2ex]
+
+The agent is characterized by
+
+\Blue{Policy:} \hspace{2em} $\pi(s,a) = p(a_t=a|s_t=s)$ \\[1ex]
+
+\emph{Why is the action at time $t$ only dependent on the state at time $t$?}
+\end{frame}
+
+\begin{frame}
+\frametitle{Markov Decision Problems (MDPs)}
+
+{\em Why is the action at time $t$ only dependent on the state at time $t$?}
+
+\centerline{\includegraphics[width=2.1in]{mdp2}}
+
+Actions $a_t$ should be chosen to maximize sum of (discounted)
+future rewards $R_t$.
+
+By the Markov properties in the graph (i.e.\ conditional
+independence), future rewards and states are independent of past
+rewards, actions, and states given $s_t$ and $a_t$:
+\[
+p(s_{t+1}, r_{t+1}, s_{t+2}, r_{t+2}, \ldots | s_{t}, a_{t}, s_{t-1},
+a_{t-1}, \ldots )\;=\;p(s_{t+1}, r_{t+1}, s_{t+2}, r_{t+2}, \ldots |
+s_{t}, a_{t}) 
+\]
+If $s_t$ is known, the {\em expected} value of the return $R_t$ depends only
+on $a_t$, so previous states and actions are irrelevant.
+\end{frame}
+
+\begin{frame}
+\frametitle{Value Functions}
+
+\Blue{Value Function:} how good is it to be in a given state? This obviously depends on the agent's policy:
+\[
+V^\pi(s)\;=\;\E_{\pi}[R_t|s_t=s]\;=\;
+\E_\pi\Big[\sum_{k=0}^\infty\gamma^k r_{t+k+1}\Big| s_t=s \Big].
+\]
+
+\Blue{State-action value function:} how good is it to be in a given
+state and take a given action, and then follow policy $\pi$:
+\[
+Q^\pi(s,a)\;=\;\E_\pi[R_t|s_t=s,a_t=a]\;=\;
+\E_\pi\Big[\sum_{k=0}^\infty \gamma^k r_{t+k+1}\Big| s_t=s, a_t=a\Big].
+\]
+
+The relation between the state value function and the state-action value
+function:
+\[
+V^\pi(s)\;=\;\sum_a\pi(s,a) Q^\pi(s,a)
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Self-Consistency of Value Functions}
+
+A fundamental property of value functions is that they satisfy a set
+of recursive consistency equations. $V^\pi$ is the unique solution to
+these equations. 
+\[
+\begin{split}
+V^\pi(s) \;&=\;\E_\pi[R_t|s_t=s]\\
+&=\;\E_\pi\Big[r_{t+1} + \gamma \sum_{k=0}^\infty \gamma^k
+r_{t+k+2}\Big| s_t=s\Big]\\ 
+&=\;\sum_a \pi(s,a) \sum_{s'} \cP_{ss'}^a \Big( \cR_{ss'}^a + \gamma \E_\pi
+\Big[\sum_{k=0}^\infty \gamma^k r_{t+k+2} \Big| s_{t+1}=s'\Big] \Big) \\
+&=\;\sum_a\pi(s,a)\sum_{s'}\cP_{ss'}^a\Big(\cR_{ss'}^a+\gamma V^\pi(s')\Big) 
+\end{split}
+\]
+We can solve them using a ``backup operation'' from $s'\rightarrow s$ (or
+other means).  Linear system of $N\equiv|s|$ equations in $N$ unknowns.
+\[
+\vv = \big(I-\gamma\sum_a\mbox{diag}(\bpi_a)\cP^a\big)^{-1}
+\big(\sum_a\bpi_a\odot\mbox{diag}(\cP^a\cR^{a\top})\big) 
+\]
+There is a similar equation for $Q^{\pi}(s,a)$
+\end{frame}
+
+\begin{frame}
+\frametitle{Optimal Policies and Values}
+
+{\bf Optimal Policy:} $\pi^*$ such that $V^{\pi^*}(s) \ge V^\pi(s) \;
+\forall s$.
+
+There may be more than one optimal policy.
+
+Question: Is there always at least one optimal policy? YES
+
+{\bf Optimal state value function}: $V^*(s) = \max_\pi V^\pi(s) \;
+\forall s$ 
+
+{\bf Optimal state-action value function}: $Q^*(s,a) = \max_\pi
+Q^\pi(s,a) \; \forall s$. This is the expected return of action $a$ in
+state $s$, thereafter following optimal policy. 
+\[
+Q^*(s,a)\;=\;\E[r_{t+1} + \gamma V^*(s_{t+1}) |s_t=s, a_t=a]. 
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Bellman Optimality Equation}
+\[
+\begin{split}
+V^*(s)\;&=\;\max_a Q^{\pi^*}(s,a)\\
+&=\;\max_a\E_{\pi^*}\Big[\sum_{k=0}^\infty \gamma^k r_{t+k+1}\Big|s_t=s, a_t=a \Big]\\ 
+&=\;\max_a\E_{\pi^*}\Big[r_{t+1} + \gamma V^*(s_{t+1}) \Big|s_t=s, a_t=a \Big]\\
+&=\;\max_a \sum_{s'} \cP_{ss'}^a \big(\cR_{ss'}^a + \gamma V^*(s')\Big)
+\end{split}
+\]
+$N$ {\em nonlinear} equations in $N$ unknowns for $V^*$.
+
+\[
+\begin{split}
+Q^*(s,a)\;&=\;\E\Big[r_{t+1} + \gamma \max_{a'} Q^*(s_{t+1},a')
+\Big| s_t=s, a_t=a \Big]\\
+&=\;\sum_{s'} \cP_{ss'}^a \big( \cR_{ss'}^a + \gamma \max_{a'} Q^*(s',a')\big)
+\end{split}
+\]
+$NA$ {\em nonlinear} equations in $NA$ unknowns for $Q^*$
+\end{frame}
+
+\begin{frame}
+\frametitle{Solving MDPs}
+
+Given the optimal value function, $V^*$, it is easy to get optimal
+policy $\pi^*$: be {\bf greedy} w.r.t.\ $V^*$.
+
+If you have $V^*$, the actions that appear best after a  one-step
+search will be optimal.
+
+$V^*$ turns a long-term reward into a quantity that is locally and
+immediately available.
+
+Using $Q^*$ it is even easier to get the optimal policy:
+\[
+\pi^*(s,a) = 0 \;\; \forall a \;\; s.t. \;\; Q^*(s,a) \neq \max_{a'} Q^*(s,a')
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Policy Improvement Theorem}
+
+{\bf Policy Evaluation} \hfill $ \displaystyle
+V_{k+1}^\pi(s) \leftarrow \sum_a \pi(s,a) \sum_{s'} \cP_{ss'}^a
+\big(\cR_{ss'}^a + \gamma V_k^\pi(s') \big)$ \hfill\\
+assumes $\cP$ known, $\cR$ known, and a full backup (we can also sweep in
+place) \vspace{0.2in}
+
+{\bf Policy Improvement Theorem}
+\[
+Q^\pi(s,\pi'(s))\;\ge\;V^\pi(s)\;\forall s\;\;\Longrightarrow\;\;V^{\pi'}(s)
+\;\ge\;V^{\pi}(s) 
+\]
+{\bf Proof}: 
+\vspace*{-3ex}
+\[
+\begin{split} 
+V^{\pi}(s)\;&\le\;Q^\pi(s,\pi'(s))\\
+&=\;\E_{\pi'}[r_{t+1} + \gamma V^\pi(s_{t+1})|s_t=s]\\
+&\le\;\E_{\pi'}[r_{t+1} + \gamma Q^\pi(s_{t+1},\pi'(s_{t+1}))|s_t=s]\\
+&=\;\E_{\pi'}\big[r_{t+1} + \gamma \E_{\pi'}[r_{t+2}+\gamma V^{\pi}(s_{t+2})]|s_t=s\big]\\
+&=\;\E_{\pi'}[r_{t+1} + \gamma r_{t+2}+\gamma^2V^{\pi}(s_{t+2})|s_t=s]\\
+&\;\;\vdots\\
+&\le\;V^{\pi'}(s)
+\end{split}
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Policy Iteration}
+
+The policy improvement theorem suggests a way of improving policies:
+\[
+\begin{split}
+\pi'(s)\;&\leftarrow\;\arg \max_a Q^\pi(s,a) \;\; \forall s\\
+&=\;\arg \max_a \E[r_{t+1} + \gamma V^\pi(s_{t+1})|s_t=s,a_t=a]
+\end{split}
+\]
+This procedure converges to an optimal policy by policy improvement
+theorem and Bellman optimality.
+\[
+V^{\pi'}(s)\;\ge\;\arg \max_a Q^{\pi}(s,a)\;\ge\;\sum_a \pi(s,a)
+Q^{\pi}(s,a)\;=\;V^{\pi}(s)
+\]
+{\bf Policy Iteration:} Iterates between evaluation and improvement
+\[
+\pi_0 \stackrel{E}{\longrightarrow} 
+V^{\pi_0} \stackrel{I}{\longrightarrow} 
+\pi_1 \stackrel{E}{\longrightarrow} 
+V^{\pi_1} \stackrel{I}{\longrightarrow} 
+\pi_2 \ldots \pi^*
+\]
+Problem with Policy Iteration: Evaluation step can be really slow...
+\end{frame}
+
+\begin{frame}
+\frametitle{Value Iteration}
+
+Do we really need to wait until convergence of the evaluation step?
+
+In fact, we can improve after {\bf one} sweep of evaluation!
+
+\[
+\begin{split}
+V_{k+1}(s)\;&\leftarrow\;\max_a \E[ r_{t+1}+ \gamma V_k(s_{t+1})|s_t=s,a_t=a] \\
+&=\;\max_a \sum_{s'} \cP_{ss'}^a \big( \cR_{ss'}^a + \gamma V_k(s')\big)
+\end{split}
+\]
+
+converges: $V_k \longrightarrow V^*$. At each step we also have a
+policy. 
+
+Problem: it is still not feasible to update the
+value of every single state.
+
+E.g. backgammon has $10^{20}$ states!
+
+Bellman called this the {\bf curse of dimensionality}
+\end{frame}
+
+\begin{frame}
+\frametitle{Asynchronous dynamic programming}
+
+These are in-place iterated dynamic programming (DP) algorithms that
+are not organized in terms of systematic sweeps over all the states.
+
+{\em States are backed-up in order visited or randomly.}
+
+To converge the algorithms must continue to visit every state.
+
+Key idea in RL: We can run the DP algorithm at the same time as the
+agent is {\em actually experiencing} the MDP.
+
+This leads to an {\bf exploration vs exploitation tradeoff}: act so as to visit
+new parts of state space or exploit already visited part of state-space?
+
+An example of a simple exploration strategy are $\epsilon$-greedy
+policies: 
+\[
+\pi_{\epsilon}(s,a) = (1-\epsilon) \pi(s,a) + \epsilon u(a)
+\] 
+where $u(a)$ is a uniform distribution over actions.
+
+{\em Can you think of anything wrong with this?}
+\end{frame}
+
+\begin{frame}
+\frametitle{Monte Carlo and TD}
+
+{\bf Monte Carlo methods} solve RL problems by averaging sample returns.
+
+Question: how do you trade off length of sampled trajectory, vs
+previously estimated values?
+\begin{eqnarray}
+V(s_t) &\leftarrow &V(s_t) + \alpha [ r_{t+1} + \gamma V(s_{t+1}) -
+V(s_{t})] \label{one} \\
+V(s_t) &\leftarrow &V(s_t) + \alpha [ r_{t+1} + \gamma r_{t+2} +
+\gamma^2 V(s_{t+2}) -
+V(s_{t})] \nonumber \\
+V(s_t) &\leftarrow &V(s_t) + \alpha [ r_{t+1} + \gamma r_{t+2} +
+\gamma^2 r_{t+3} + \gamma^3 V(s_{t+3}) -
+V(s_{t})] \nonumber \\
+& \vdots& \nonumber \\
+V(s_t) &\leftarrow &V(s_t) + \alpha [ R_t - V(s_{t})]  \label{two}
+\end{eqnarray}
+
+Equation~(\ref{one}) is {\bf Temporal Difference learning,
+TD(0)}. TD($\lambda$) approximates the range eqn
+(\ref{one})--(\ref{two}), where higher $\lambda$ is closer to the full
+MC method.
+
+TD($\lambda$) has been proven to converge
+
+These are general methods for controlling the {\bf bias-variance tradeoff}.
+\end{frame}
+
+\begin{frame}
+\frametitle{SARSA and Q Learning}
+
+Definitions: {\em on-policy} methods evaluate or improve the
+current policy used for control. {\em Off-policy} methods evaluate or improve
+one policy, while acting using another (behavior) policy.
+
+In off-policy methods, the behavior policy must have non-zero
+probability for each state-action the evaluated policy does.
+
+
+{\bf SARSA:} on-policy greedy control
+\[
+Q(s_t,a_t)\;\leftarrow\;Q(s_t,a_t) + \alpha [ r_{t+1} + \gamma 
+\; Q(s_{t+1},a_{t+1}) - Q(s_t,a_t) ]
+\]
+
+{\bf Q Learning}: off-policy greedy control
+\[
+Q(s_t,a_t)\;\leftarrow\;Q(s_t,a_t) + \alpha [ r_{t+1} + \gamma \max_a
+Q(s_{t+1},a) - Q(s_t,a_t) ]
+\]
+Converges if $\forall a,s$ are visited and updated infinitely often.
+
+We can also combine the bias-variance ideas with $Q$ and SARSA, to get
+$Q(\lambda)$ and SARSA($\lambda$).
+\end{frame}
+
+\begin{frame}
+\frametitle{Function Approximation}
+
+For very large or continuous state spaces it is hopeless to store a
+table with all the state values or state-action values.
+
+\parbox{2.7in}{
+It makes sense to use {\bf function approximation}\\[-1ex]
+\[
+V(s) = f_\theta(s)
+\]
+e.g. basis function representation: \\[-1ex]
+\[
+V(s) = \sum_i \theta_i \phi_i(s)
+\]
+Similarly for $Q(s,a)$.\\[1ex]
+This should hopefully lead to better {\bf generalization}}
+\parbox{2.0in}{
+\centerline{\includegraphics[width=2.0in]{value}}}
+
+\vspace{1.5ex}
+
+Gradient descent methods:\\[-1ex]
+\[
+\btheta(t+1) = \btheta(t) + \alpha [v_t - V_t(s_t)] \frac{\partial
+V_t(s_t)}{\partial {\btheta}}
+\]
+where $\alpha$ is a learning rate and $v_t$ is a measured/estimated
+value. See chapter 8 of Sutton and Barto.
+\end{frame}
+
+\begin{frame}
+\frametitle{Optimal Control}
+
+{\bf Optimal Control}: The engineering field of optimal control covers
+exactly the same topics as RL, except the state and action space is
+usually assumed to be continuous, and the model is often known.
+
+The {\bf Hamilton-Jacobi-Bellman} optimality conditions
+are the continuous state generalization of the Bellman equations.
+
+A typical elementary problem in optimal control is the linear
+quadratic Gaussian control {\bf LQG} problem. Here the cost function
+is quadratic in states $\xx_t$  and actions $\uu_t$, and the system is a
+linear-Gaussian state-space model. 
+\[
+\xx_{t+1} = A \xx_t + B \uu_t + \epsilon_t
+\]
+For this model the optimal policy
+can be computed from the estimated state. It's a linear feedback
+controller:
+\[
+\uu_t = L \hat{\xx}_t
+\]
+The optimal policy here happens not depend on the uncertainty in
+$\xx_t$. This is not generally the case.
+\end{frame}
+
+\begin{frame}
+\frametitle{Influence Diagrams}
+
+\parbox{2.7in}{You can extend the framework of directed acyclic probabilistic
+graphical models (a.k.a. Bayesian networks) to include \Red{\bf decision
+nodes} and \Blue{\bf value nodes}. These are called {\bf influence
+diagrams}.
+
+Solving an influence diagram corresponds to finding the settings of the
+decision nodes that maximize the expectation of the value node.}
+\parbox{2in}{\centerline{\includegraphics[width=2in]{influence-diagram-c}}}
+
+It is possible to convert the problem of solving an influence diagram
+into the problem of doing inference in a (usually
+multiply connected)  graphical model (Shachter and Peot, 1992). Exact
+solutions can be computationally intractable.
+
+Like other graphical models, influence diagrams can contain both
+observed and {\bf hidden} variables...
+\end{frame}
+
+\begin{frame}
+\frametitle{POMDPs}
+
+\parbox{2.4in}{
+POMDP = Partially-observable Markov decision problem.
+
+The agent does not observe the full state of the environment.
+
+What is the optimal policy? 
+}
+\parbox{2.4in}{
+\centerline{\includegraphics[width=2.4in]{pomdp}}}
+
+\begin{itemize}
+\item If the agent has the correct model of the world, it turns out that the
+optimal policy is a (piece-wise linear) function of the {\bf belief
+state}, $P(s_t| a_1, \ldots, a_{t-1}, r_1, \ldots, r_{t}, o_1,
+\ldots, o_{t})$.\\
+\Blue{Unfortunately, the belief state can grow exponentially complex. }
+
+\item Equivalently, we can view the optimal policy as being a function
+of the entire sequence of past actions and observations (this is the
+usual way the policy in influence diagrams is represented).\\ 
+\Blue{Unfortunately, the set of possible such sequences grows
+exponentially. }
+\end{itemize}
+
+Efficient methods for approximately solving POMDPs is an active research area.
+\end{frame}
+
+\begin{frame}
+\frametitle{RL summary}
+
+Central ideas in reinforcement learning
+\begin{itemize}
+\item the difference between \emph{reward} and \emph{value}
+\item Bellman consistency of values $V^\pi(s)=\sum_a\pi(s,a)\sum_{s'}\cP_{ss'}^a\Big(\cR_{ss'}^a+\gamma V^\pi(s')\Big)$
+\item Policy Iteration $=$ Policy Evaluation $+$ Policy Improvement
+\item Requires knowledge of and represenatation of transitions and rewards
+\item Key idea: run the algorithms as we're experiencing the MDP
+\item on-policy and off-policy methods (SARSA and Q-learning) don't
+require knowledge of transition probabilities and rewards
+\item exploration vs. exploitation
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Some References on Reinforcement Learning}
+
+\begin{itemize}
+\item{}
+Kaelbling, L.P.,  Littman, M.L. and Moore, A.W. (1996) Reinforcement
+Learning: A Survey. Journal of Aritificial Intelligence Research
+4:237-285. 
+
+\item{}
+Sutton, R.S.  and Barto, A.G. (2000) Reinforcement Learning: An
+Introduction. MIT Press. \texttt{http://www.cs.ualberta.ca/\maketilde sutton/book/ebook}
+
+\item{}
+Bertsekas, D.P. and Tsitsiklis, J.N. (1996) Neuro-Dynamic Programming.
+Athena Scientific.
+
+\item{} Bryson, A.E. and Ho, Y.-C. (1975) Applied Optimal
+Control. Hemisphere Publishing Corp. Washington DC. 
+
+\end{itemize}
+\end{frame}
+
+\end{document}

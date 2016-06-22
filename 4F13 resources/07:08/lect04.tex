@@ -1,0 +1,669 @@
+\input{../../teaching}
+
+\begin{document}
+
+% divide all sizes by around 2.2
+
+\titleslide{Lecture 4: Graphical Models}{January 30th, 2008}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Three main kinds of graphical models}
+
+\begin{center}
+\begin{tabular}{ccc}
+\includegraphics[width=35mm]{factorgraphb} &
+\includegraphics[width=35mm]{undir2} &
+\includegraphics[width=35mm]{dir2} \\
+factor graph & undirected graph & directed graph 
+\end{tabular}
+\end{center}
+
+\vspace*{2em}
+
+\begin{itemize}
+\item Nodes correspond to random variables
+\item Edges represent statistical dependencies between the variables
+\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Why do we need graphical models?}
+
+\begin{itemize}
+\item Graphs are an \Blue{\bf intuitive} way of representing and visualising the
+  relationships   between many variables. (Examples: family trees,
+  electric circuit diagrams, neural networks)
+\item A graph allows us to abstract out the \Blue{\bf conditional independence}
+  relationships between the variables from the details of their
+  parametric forms. Thus we can answer questions like: ``Is $A$ dependent
+  on $B$ given that we know the value of $C$ ?'' just by looking at the
+  graph. 
+\item Graphical models allow us to define general \Blue{\bf
+    message-passing algorithms} that implement probabilistic inference
+    efficiently. Thus we can answer queries like ``What is
+    $P(A|C=c)$?'' without enumerating all settings of all variables in
+    the model.
+\end{itemize}
+
+\vfill
+
+\centerline{\Green{Graphical models = statistics $\times$ graph theory
+    $\times$ computer science.}}
+
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Conditional Independence}
+
+{\bf Conditional Independence:} 
+
+\[
+X\ci Y|V \;\; \Leftrightarrow \;\; p(X|Y,V)=p(X|V)
+\]
+ when $p(Y,V)>0$. Also 
+\[
+X\ci Y|V \;\; \Leftrightarrow \;\; p(X,Y|V)=p(X|V) \, p(Y|V)
+\] 
+
+In general we can think of conditional independence between {\bf sets
+  of variables}:
+\[
+{\cal X} \ci {\cal Y} | {\cal V} \;\; \Leftrightarrow \;\; 
+p({\cal X},{\cal Y}|{\cal V})=p({\cal X}|{\cal V}) \, p({\cal Y}|{\cal
+  V})
+\]
+
+{\bf Marginal Independence:}
+
+\[
+X\ci Y \;\; \Leftrightarrow \;\; X\ci Y|\emptyset \;\; \Leftrightarrow
+\;\; p(X,Y)=p(X) \, p(Y)
+\]
+
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Conditional and Marginal Independence (Examples)}
+
+\begin{itemize}
+\item Amount of Speeding Fine $\ci$ Type of Car $|$ Speed 
+
+\item Lung Cancer $\ci$ Yellow Teeth $|$ Smoking
+
+\item (Position, Velocity)$_{t+1}$ $\ci$ (Position, Velocity)$_{t-1}$ $|$
+(Position, Velocity)$_{t}$, Acceleration$_t$
+
+\item Child's Genes $\ci$ Grandparents' Genes $|$ Parents' Genes
+  
+
+\item Ability of Team A $\ci$ Ability of Team B
+
+\item \Red{not} ( Ability of Team A $\ci$ Ability of Team B $|$ Outcome of A
+vs B Game )
+
+\end{itemize}
+
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Factor Graphs}
+
+\parbox{65mm}{
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=30mm]{factorgraphb} & 
+\includegraphics[width=30mm]{factorgraph2b}\\
+(a)  &  (b) 
+\end{tabular}
+\end{center}} \hspace{1.5mm}
+\parbox{55mm}{Two types of nodes:
+\begin{itemize}
+\item The circles in a factor graph represent random variables (e.g.\ $A$). 
+\item The filled dots represent factors in the joint distribution
+  (e.g.\ $g_1(\cdot)$).
+\end{itemize}}
+
+\vspace{1ex}
+
+\hspace{1em} 
+(a) $P(A,B,C,D,E) = \frac{1}{Z} g_1(A,C) g_2(B,C,D) g_3(C,D,E) $ \\[1ex]
+\hspace*{1em} 
+(b) $P(A,B,C,D,E) = \frac{1}{Z} g_1(A,C) g_2(B,C) g_3(C,D) g_4(B,D)
+g_5(C,E) g_6(D,E)$\\
+
+The $g_i$ are non-negative functions of their arguments, and $Z$ is a
+normalization constant.
+
+E.g. in (a), if all variables are discrete and take values in ${\cal A} \times
+{\cal B} \times {\cal C} \times {\cal D} \times {\cal E}$:
+{\small 
+\[
+Z=\sum_{a \in {\cal A}} \sum_{b \in {\cal B}} \sum_{c \in {\cal C}}
+\sum_{d \in {\cal D}} \sum_{e \in {\cal E}} g_1(A=a,C=c) g_2(B=b,C=c,D=d)
+g_3(C=c,D=d,E=e)
+\]}
+
+Two nodes are \Red{neighbors} if they share a common factor. 
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Factor Graphs}
+\vspace{-3ex}
+\begin{center}
+\begin{tabular}{ccc}
+\includegraphics[width=30mm]{factorgraphb} & \hspace{2em}
+\includegraphics[width=30mm]{factorgraph2b}\\
+(a)  &  (b) 
+\end{tabular}
+\end{center}
+\vspace{-0.3ex}
+
+The circles in a factor graph represent random variables. \\
+The filled dots represent factors in the joint distribution. \\
+
+\hspace{1em} 
+(a) $P(A,B,C,D,E) = \frac{1}{Z} g_1(A,C) g_2(B,C,D) g_3(C,D,E) $ \\[1ex]
+\hspace*{1em} 
+(b) $P(A,B,C,D,E) = \frac{1}{Z} g_1(A,C) g_2(B,C) g_3(C,D) g_4(B,D)
+g_5(C,E) g_6(D,E)$\\
+
+Two nodes are \Red{neighbors} if they share a common factor. \\
+
+{\bf Definition:} A \Blue{\em path} is a sequence of neighboring nodes.\\
+
+{\bf Fact:} $X \ci Y | {\cal V}$ if \Blue{every path} between $X$ and $Y$
+contains some node $V \in {\cal V}$ \\
+
+{\bf Corollary:} Given the neighbors of $X$, the variable $X$ is \Red{conditionally
+independent} of all other variables: $X \ci Y | \neigh(X)$, \ \ $\forall Y \notin
+\{X \cup \neigh(X)\}$
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Proving Conditional Independence}
+
+Conditional independence:
+\begin{equation}
+X\ci Y|V \;\; \Leftrightarrow \;\; p(X|Y,V)=p(X|V)
+\label{eq1}
+\end{equation}
+Assume:
+\begin{equation}
+P(X,Y,V) = \frac{1}{Z} g_1(X,V) g_2(Y,V) 
+\label{eq2}
+\end{equation}
+Then summing (\ref{eq2}) over $X$ we get:
+\begin{equation}
+P(Y,V) = \frac{1}{Z} [ \sum_X g_1(X,V)] g_2(Y,V) 
+\label{eq3}
+\end{equation}
+Dividing (\ref{eq2}) by (\ref{eq3}) we get:
+\begin{equation}
+P(X|Y,V) = \frac{g_1(X,V)}{\sum_X g_1(X,V)}
+\label{eq4}
+\end{equation}
+Since the rhs.\ of (\ref{eq4}) doesn't depend on $Y$, it follows
+that $X$ is independent of $Y$ given $V$. \\
+Therefore factorizaton (\ref{eq2}) implies conditional independence (\ref{eq1}).
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Undirected Graphical Models}
+
+In an \Blue{Undirected Graphical Model}, the joint probability over all
+variables can be written in a factored form:  
+\[
+P({\bf x}) = \frac{1}{Z} \prod_j g_j({\bf x}_{C_j})
+\]
+where ${\bf x}=(x_1, \ldots, x_K)$, and  
+\[
+C_j \subseteq \{ 1, \ldots, K\}
+\] 
+are subsets of the set of all variables, and ${\bf x}_S \equiv (x_k :
+k \in S)$. \\
+
+% This type of probabilistic model can be represented graphically.\\
+
+{\bf Graph Specification:} Create a node for each variable. Connect nodes $i$
+and $k$   if there exists a set $C_j$ such that  both $i \in C_j$ and
+$k \in C_j$.  These sets form the \Blue{\em cliques} of the graph (fully
+connected subgraphs).\\
+
+{\bf Note:} Undirected Graphical Models are also called \Blue{\em Markov
+Networks}. \\
+
+Very similar to factor graphs.
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Undirected Graphical Models}
+
+\vspace*{-1.5ex}
+\centerline{
+% \begin{tabular}{cc}
+\includegraphics[width=35mm]{undir2}
+% &\parbox[b]{100mm}{Examples:\\ Boltzmann Machines\\ Markov Random
+%  Fields{\vskip 20mm}} 
+% \end{tabular}
+}
+\vspace*{0.1mm}
+
+\[
+P(A,B,C,D,E) = \frac{1}{Z} g_1(A,C) g_2(B,C,D) g_3(C,D,E)
+\]
+
+{\bf Fact:} $X \ci Y | {\cal V}$ if every path between $X$ and $Y$
+contains some node $V \in {\cal V}$ \\
+
+{\bf Corollary:} Given the neighbors of $X$, the variable $X$ is conditionally
+independent of all other variables: $X \ci Y | \neigh(X)$, \ \ $\forall Y \notin
+\{X \cup \neigh(X)\}$\\
+
+{\bf Markov Blanket:} ${\cal V}$ is a Markov Blanket for $X$ iff $X\ci
+Y|{\cal V}$ for all $Y \notin \{ X \cup {\cal V}\}$.\\
+
+{\bf Markov Boundary:} minimal Markov Blanket $\equiv \neigh(X)$ for
+undirected graphs and factor graphs
+
+
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Comparing Undirected Graphs and Factor Graphs}
+
+\begin{center}
+\begin{tabular}{ccc}
+\includegraphics[width=35mm]{undir2} &
+\includegraphics[width=35mm]{factorgraphb} &
+\includegraphics[width=35mm]{factorgraph2b} \\
+(a) & (b) & (c) 
+\end{tabular}
+\end{center}
+
+\vspace{1ex}
+
+All nodes in (a), (b), and (c) have exactly the same neighbors and
+therefore these three graphs represent exactly the same conditional
+independence relationships. \\
+
+(c) {\em also} represents the fact that the probability factors
+into a product of pairwise functions. \\
+
+Consider the case where each variables is discrete and can take on
+$K$ possible values. Then the functions in (a) and (b) are tables with
+${\cal O}(K^3)$ cells, whereas in (c) they are ${\cal O}(K^2)$. 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Problems with Undirected Graphs and Factor Graphs}
+
+In UGs and FGs, many useful independencies are unrepresented---two
+variables are  connected merely because some other variable depends on them:
+
+\vspace*{4mm}
+\centerline{\includegraphics[width=\textwidth]{undirvsdir}}
+\vspace*{4mm}
+
+This highlights the difference between {\bf marginal independence} and
+{\bf conditional independence}.\\ 
+
+$R$ and $S$ are marginally independent (i.e.\ given nothing), but they
+are conditionally dependent given $G$.\\
+
+\Blue{``Explaining Away''}: Observing that the spinkler is on, would
+explain away the observation that the ground was wet, making it less
+probable that it rained. 
+ 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Directed Acyclic Graphical Models (Bayesian Networks)}
+
+\vspace{1em}
+\centerline{\includegraphics[width=30mm]{dir2}}
+
+A DAG Model / Bayesian network\footnote{``Bayesian networks'' can and
+  often are learned using non-Bayesian (i.e. frequentist) methods;
+  Bayesian networks (i.e.\ DAGs) do not require that parameter or structure
+  learning use Bayesian methods.} corresponds to a factorization of the joint
+probability distribution:
+\[
+p(A,B,C,D,E) = p(A) p(B) p(C|A,B) p(D|B,C) p(E|C,D)
+\]
+In general: \vspace*{-1em}
+\[
+p(X_1, \ldots, X_n) = \prod_{i=1}^n p(X_i|X_{{\mbox{pa}(i)}})
+\]
+where $\mbox{pa}(i)$ are the \Blue{parents} of node $i$.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Directed Acyclic Graphical Models (Bayesian Networks) }
+
+
+
+% \frametitle{Bayesian Networks (Directed Graphical Models)}
+
+\vspace*{-1ex} 
+\hspace*{3in} \includegraphics[width=20mm]{dir2}
+
+\vspace*{-3ex} 
+{\bf Semantics:} $X\ci Y|{\cal V}$ if ${\cal V}$ \Red{d-separates} $X$
+from $Y$\footnote{See also the ``Bayes Ball'' algorithm in the Appendix}.\\
+
+{\bf Definition:} ${\cal V}$ \Red{d-separates} $X$ from $Y$ if {\em every} undirected
+path\footnote{An undirected path ignores the direction of the edges.}
+between $X$ and $Y$ is \Blue{\bf blocked} by ${\cal V}$. A path is blocked
+by ${\cal V}$ if 
+there is a node $W$ on the path such that either: 
+%
+\begin{enumerate}
+\item $W$ has converging arrows along
+the path ($\rightarrow W 
+\leftarrow$)\footnote{Note that converging arrows {\em along the path}
+only refers to what happens on that path.} and neither $W$ nor its
+descendants are observed (in ${\cal V}$), or 
+\item $W$ does not have converging arrows along the path ($\rightarrow W
+\rightarrow$ or $\leftarrow W
+\rightarrow$) and $W$ is observed ($W\in {\cal V}$).
+\end{enumerate}
+
+\vspace{1ex}
+
+{\bf Corollary:} Markov Boundary for $X$: $\{\operatorname{parents}(X)\cup\operatorname{children}(X)\cup\operatorname{parents-of-children}(X)\}$.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Examples of D-Separation in DAGs}
+
+\vspace*{-3ex} 
+\hspace*{3in} \includegraphics[width=30mm]{dir2}
+
+Examples:
+
+\begin{itemize}
+\item \PineGreen{$A \ci B $} since $A \rightarrow C \leftarrow B$ is
+  blocked by $C$, $A
+  \rightarrow C \rightarrow D \leftarrow B$ is blocked by $D$, etc.
+\item \Red{not ($A \ci B | C$ )} since $A \rightarrow C \leftarrow B$ is not
+blocked.
+\item \PineGreen{$A \ci D | \{ B, C \}$} since $A \rightarrow C
+  \rightarrow D$ is 
+  blocked by $C$,  $A \rightarrow C \leftarrow B \rightarrow D$ is
+  blocked by $D$, and $A \rightarrow C \rightarrow E \leftarrow D$ is
+  blocked by $C$.
+\item \Red{not ($A \ci B | E $)} since $A \rightarrow C \leftarrow B$
+  is not blocked.
+\end{itemize}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Directed Graphs for Statistical Models: \\ Plate Notation}
+
+\centerline{\parbox[t!]{1.2in}{\includegraphics[scale=0.4]{gm-gaussian}}
+\hspace{2ex} $\equiv$ \hspace{2ex}
+\parbox[t!]{1.8in}{\includegraphics[scale=0.4]{gm-gaussian-noplate}}}
+
+\vspace{3ex}
+
+A data set of $N$ points generated from a Gaussian:
+\[
+p(x_1, \ldots, x_N, \mu, \sigma) = p(\mu) p(\sigma) \prod_{n=1}^N
+p(x_n|\mu,\sigma)
+\]
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Summary}
+
+\begin{itemize}
+\item Three kinds of graphical models: directed, undirected, factor \\
+  (there {\em are} other important classes, e.g.\ directed mixed graphs)
+\item Marginal and conditional independence
+\item Markov boundaries and d-separation
+\item Plate notation
+\end{itemize}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix}
+
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{From Directed Trees to Undirected Trees}
+
+\centerline{\includegraphics[width=1.7in]{btmt}}
+
+\vspace*{-0.1in}
+\begin{equation*}
+\begin{split}
+p(x_1,x_2,\ldots,x_7)\;=&\;\;p(x_3)p(x_1|x_3)p(x_2|x_3)p(x_4|x_3)p(x_5|x_4)p(x_6|x_4)p(x_7|x_4)\\[1ex]
+=&\;\frac{p(x_1,x_3)p(x_2,x_3)p(x_3,x_4)p(x_4,x_5)p(x_4,x_6)p(x_4,x_7)}{p(x_3)p(x_3)p(x_4)p(x_4)p(x_4)}\\[1ex]
+=&\;\frac{\mbox{product of cliques}}{\mbox{product of clique intersections}}\\[1ex]
+=&\;g_1(x_1,x_3)g_2(x_2,x_3)g_3(x_3,x_4)g_4(x_4,x_5)g_5(x_4,x_6)g_6(x_4,x_7)=\\
+=&\; \prod_ig_i(C_i)
+\end{split}
+\end{equation*}
+
+Any directed tree can be converted into an undirected tree
+representing the same conditional independence relationships, and
+viceversa. 
+
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Expressive Power of Directed and Undirected Graphs}
+
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=1.2in]{exm}&\qquad \parbox[b]{45mm}{No
+  Directed Graph (Bayesian network) can represent these and only these independencies{\vskip 9mm}}
+\end{tabular}
+} \vspace{2mm}
+%
+No matter how we direct the arrows there will always be two
+non-adjacent parents sharing a common child $\Longrightarrow$
+dependence in Directed Graph but independence in Undirected 
+Graph. \vspace{6mm}
+
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=1.2in]{exb}&\qquad \parbox[b]{45mm}{No
+  Undirected Graph or Factor Graph can represent these and only these
+  independencies{\vskip 2mm}} 
+\end{tabular}
+}
+
+Directed graphs are better at expressing causal generative models,
+undirected graphs are better at representing soft constraints between
+variables. 
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Some Examples of Directed Graphical Models}
+ 
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=1.2in]{fa2col}&\qquad \parbox[b]{45mm}{factor analysis\\ probabilistic PCA{\vskip 5mm}}
+\end{tabular}
+}
+
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=1.8in]{ssm}&\qquad \parbox[b]{45mm}{hidden Markov models\\ linear dynamical systems{\vskip 2mm}}
+\end{tabular}
+}
+
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=1.8in]{swssmalt}&\qquad \parbox[b]{45mm}{switching state-space models{\vskip 2mm}}
+\end{tabular}
+}
+
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Examples of Undirected Graphical Models}
+
+\begin{itemize}
+\item Markov Random Fields (used in Computer Vision)
+\hspace{12mm} \raisebox{-3ex}{\includegraphics[width=12mm]{MRF2}}
+\item Exponential Language Models (used in Speech and Language Modelling) 
+\[
+p(s) = \frac{1}{Z} p_0(s) \exp \left\{ \sum_i \lambda_i f_i(s) \right\}
+\]
+\item Products of Experts (widely applicable)
+\[
+p({\bf x}) = \frac{1}{Z} \prod_j p_j({\bf x} | \theta_j)
+\]
+\item Boltzmann Machines (a kind of Neural Network/Ising Model)
+\hspace{12mm} \raisebox{-3ex}{\includegraphics[width=12mm]{hopfield}}
+\end{itemize}
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Clique Potentials and Undirected Graphs}
+
+\vspace{-1ex}
+{\bf Definition:} a \emph{clique} is a fully connected subgraph. By clique we usually mean maximal clique (i.e.\ not contained within another clique)\\[1ex]
+
+\parbox{3.3in}{
+$C_i$ denotes the set of variables in the $i^{th}$ clique.
+\[ p(x_1,\ldots,x_K)=\frac{1}{Z}\prod_i g_i({\bf x}_{C_i})\] where
+$ Z=\sum_{x_1\cdots x_K}\prod_i g_i({\bf x}_{C_i}) $ is the normalization.\\
+
+Associated with each clique $C_i$ is a non-negative function $g_i({\bf
+x}_{C_i})$  which measures ``compatibility'' between settings of  the
+variables. \\
+
+{\bf Example:} Let $C_1 = \{A,C\}, A \in \{0,1\}, C \in \{0,1\}$ \\
+What does this mean?
+}
+\parbox{1.8in}{
+\centerline{\includegraphics[width=15mm]{clique}}
+
+\vspace{3ex}
+
+\begin{center}
+\begin{tabular}{cc|c}
+$A$ & $C$ & $g_1(A,C)$ \\ \hline
+0 & 0 & 0.2 \\
+0 & 1 & 0.6 \\
+1 & 0 & 0.0 \\
+1 & 1 & 1.2 
+\end{tabular}
+\end{center}
+}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Hammersley--Clifford Theorem (1971)}
+
+{\bf Theorem:} A probability function $p$ formed by a normalized product of
+positive functions on cliques of $G$ is a Markov Field relative to
+$G$.\\
+
+{\bf Definition:} The distribution $p$ is a {\em Markov Field relative to
+$G$} if all conditional independence relations represented by $G$ are true
+of $p$. \\
+
+$G$ represents the following CI relations: If $V \in \cal V$ lies on
+\emph{all}  paths between $X$ and $Y$ in $G$, then $X\ci Y|{\cal
+V}$. \\ 
+
+
+{\bf Proof:} We need to show that if $p$ is a product of functions on
+cliques of $G$ then a variable is conditionally independent of its
+non-neighbors in $G$ given its neighbors in $G$. That is: 
+$\neigh(x_{\ell})$ is a Markov Blanket for~$x_{\ell}$. Let $x_m \notin
+\{x_{\ell} \cup \neigh(x_{\ell}) \}$
+%
+\begin{equation*}
+\begin{split}
+p(x_{\ell},x_m,\ldots) =& \frac{1}{Z}\prod_i g_i({\bf x}_{C_i})=\frac{1}{Z}\prod_{i:\ell \in C_i}
+g_i({\bf x}_{C_i})\prod_{j:\ell \notin C_j}g_j({\bf x}_{C_j})\\
+=& \frac{1}{Z'}f_1\big(x_{\ell},\neigh(x_\ell)\big) \; f_2\big(\neigh(x_{\ell}),x_m \big) =
+\frac{1}{Z''} p(x_{\ell}|\neigh(x_{\ell}))\; p(x_m|\neigh(x_{\ell})) 
+\end{split}
+\end{equation*}
+%
+It follows  that: \hspace{1mm}
+%
+$ \displaystyle p(x_{\ell},x_m|\neigh(x_{\ell})) = p(x_{\ell}|\neigh(x_{\ell}))\; p(x_m|\neigh(x_{\ell})) \Leftrightarrow 
+\Blue{x_{\ell} \ci x_m | \neigh(x_{\ell})}.$
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: The ``Bayes-ball'' algorithm}
+
+\centerline{\includegraphics[width=35mm]{dir2}}
+
+\Red{Game:} can you get a ball from $X$ to $Y$ without being blocked
+by ${\cal V}$? \\
+
+Depending on the direction the ball came from and the type of node, the
+ball can {\bf pass through} (from a parent to all children, from a
+child to all parents), {\bf bounce back} (from any parent to all
+parents, or from any child to all children), or be {\bf blocked}. 
+
+\begin{itemize}
+\item An unobserved (hidden) node ($W \notin \; {\cal V}$) passes balls through but also
+  bounces back balls from children. 
+\item An observed (given) node ($W \in {\cal V}$) bounces back balls from
+  parents but blocks balls from children.
+\end{itemize}
+\end{frame}
+
+\end{document}

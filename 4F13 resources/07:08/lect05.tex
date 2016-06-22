@@ -1,0 +1,599 @@
+\input{../../teaching}
+
+\begin{document}
+
+\titleslide{Lecture 5: Graphical Models: Inference}{February 1st, 2008}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Inference in a graphical model}
+
+%\vspace*{-0.12in}
+Consider the following graph: \includegraphics[width=25mm]{dir2}
+which represents: \vspace*{-1ex}
+\[
+p(A,B,C,D,E) = p(A) p(B) p(C|A,B) p(D|B,C) p(E|C,D)
+\]
+\Red{\bf Inference}: evaluate the probability distribution over some set
+of variables, given the values of another set of variables. \\
+
+For example, how can we compute $P(A|C=c)$? Assume each variable is binary. \\
+
+\Red{\bf Naive method:}
+{\small
+\begin{eqnarray*}
+p(A,C=c) &=& \sum_{B,D,E} p(A,B,C=c,D,E) \hspace{2em} \mbox{[16 operations]} \\ 
+p(C=c) &=& \sum_{A} p(A,C=c) \hspace{2em} \mbox{[2 operations]} \\
+p(A|C=c) &=& \frac{p(A,C=c)}{p(C=c)} \hspace{2em} \mbox{[2 operations]} 
+\end{eqnarray*}
+}
+\Blue{Total: 16+2+2 = 20 operations}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Inference in a graphical model}
+
+% \vspace*{-0.12in}
+Consider the following graph: \includegraphics[width=25mm]{dir2}
+which represents: \vspace*{-1ex}
+\[
+p(A,B,C,D,E) = p(A) p(B) p(C|A,B) p(D|B,C) p(E|C,D)
+\]
+Computing $p(A|C=c)$.\\
+
+\Red{\bf More efficient method:}
+{\small 
+\begin{eqnarray*}
+p(A,C=c) &=& \sum_{B,D,E} p(A)p(B)p(C=c|A,B)p(D|B,C=c)p(E|C=c,D)  \\
+&=& \sum_{B} p(A)p(B)p(C=c|A,B) \sum_D p(D|B,C=c) \sum_E p(E|C=c,D)  \\
+&=& \sum_{B} p(A)p(B)p(C=c|A,B) \hspace{2em} \mbox{[4 operations]}
+\end{eqnarray*}
+}
+\Blue{Total: 4+2+2 = 8 operations}\\
+
+Belief propagation methods use the conditional independence
+relationships in a graph to do efficient inference (for singly
+connected graphs, \Red{exponential} gains in efficiency!).
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Belief Propagation (in singly connected DAGs)}
+
+\Red{\bf Definition:} A DAG is {\em singly connected} if its underlying
+undirected graph is a tree, \emph{ie} there is only one undirected
+path between any two nodes. 
+
+\vspace*{1mm}
+\centerline{
+\includegraphics[scale=0.3]{singly-connected} \hspace*{2ex}
+\includegraphics[scale=0.3]{multiply-connected}
+}
+\vspace*{1mm}
+
+\Red{\bf Goal:} For some node $X$ we want to compute $p(X|E=e)$ given
+observed variables (evidence) $e$. \\
+
+Since we are considering singly connected graphs:
+%
+\begin{itemize}
+\item every node $X$ divides the evidence into \Green{upstream $e^+_X$} and
+\Blue{downstream $e^-_X$}
+\item every edge $X\rightarrow Y$ divides the evidence into
+  \Green{upstream $e^+_{XY}$} and \Blue{downstream $e^-_{XY}$}. 
+\end{itemize}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Three key ideas behind Belief Propagation}
+
+\centerline{\includegraphics[width=20mm]{bp}}
+
+\Red{\bf Idea 1}: The probability of a variable $X$ can be found by
+combining upstream and downstream evidence:  
+\begin{equation*}
+\begin{split}
+p(X|e)\;=&\;\;\frac{p(X,e)}{p(e)}\;=\;\frac{p(X,e^+_X,e^-_X)}{p(e^+_X,e^-_X)}
+\;\propto\;p(X|e^+_X)\quad\times\hspace{-2em}\underset{\Red{\mbox{$X$ d-separates $e_X^-$ from $e_X^+$}}}{\underbrace{p(e^-_X|X,e_X^+)}}\\
+=&\;\;\Green{p(X|e_X^+)}\Blue{p(e^-_X|X)}\;=\;\Green{\pi(X)}\Blue{\lambda(X)}
+\end{split}
+\end{equation*} \vspace*{-2em}
+
+\Red{\bf Idea 2}: The upstream and downstream evidence can be computed via a local message passing algorithm between the nodes in the graph. \\
+
+\Red{\bf Idea 3}: ``Don't send back to a node (any part of) the message it
+sent to you!''\\[2ex]
+
+we will focus on factor graphs (simpler) instead of DAGs...
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Factor Graphs}
+
+In a factor graph, the joint probability distribution  is written as a
+product of factors. Consider a vector of variables $\bfx=(x_1,\ldots,x_n)$
+\[
+p(\bfx)=p(x_1,\ldots,x_n) = \frac{1}{Z} \prod_{j} f_j(\bfx_{S_j})
+\]
+where $Z$ is the normalisation constant, $S_j$ denotes the subset of
+$\{1,\ldots,n\}$ which participate in factor  $f_j$ and $\bfx_{S_j} =
+\{ x_i : i \in S_j \}$.\\[2ex]
+
+\centerline{\includegraphics[width=30mm]{factorgraphb}}
+
+\Red{\bf variable nodes}: we draw open circles for each variable $x_i$ in the
+distribution.\\[1ex]
+\Red{\bf factor nodes}: we draw filled dots for each factor $f_j$ in
+the distribution.
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Factor graph propagation}
+
+\centerline{Singly connected vs Multiply connected factor graphs:}
+
+  \vspace{2em} 
+
+\centerline{\includegraphics[width=0.4\textwidth]{factor4node}
+  \hspace{2em} 
+\includegraphics[width=0.24\textwidth]{factorgraphb}}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Propagation in Factor Graphs}
+
+Let ${\mathrm n}(x)$ denote the set of factor nodes that are neighbors of
+$x$.\\
+Let ${\mathrm n}(f)$ denote the set of variable nodes that are
+neighbors of $f$.  \\[2ex]
+
+We can compute probabilities in a factor graph by propagating messages
+from variable nodes to factor nodes and viceversa. \\[2ex]
+
+\Red{\bf message from variable $x$ to  factor $f$}:
+\[
+\mu_{x\rightarrow f}(x) = \prod_{h \in {\mathrm n}(x)\setminus\{f\}}
+\mu_{h\rightarrow x} (x)
+\]
+
+\Red{\bf message from  factor $f$ to variable $x$}:
+\[
+\mu_{f \rightarrow x}(x) = \sum_{\bfx\setminus x} \left( f(\bfx)
+  \prod_{y\in {\mathrm n}(f)\setminus \{x\}} \mu_{y\rightarrow f}(y)
+\right)
+\]
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Propagation in Factor Graphs}
+
+\vspace*{-2ex}
+${\mathrm n}(x)$ denotes the set of factor nodes that are neighbors of
+$x$.\\
+${\mathrm n}(f)$ denotes the set of variable nodes that are
+neighbors of $f$.  \\[2ex]
+
+\Red{\bf message from variable $x$ to  factor $f$}:
+\[
+\mu_{x\rightarrow f}(x) = \prod_{h \in {\mathrm n}(x)\setminus\{f\}}
+\mu_{h\rightarrow x} (x)
+\] \\[-2ex]
+
+\Red{\bf message from  factor $f$ to variable $x$}:
+\[
+\mu_{f \rightarrow x}(x) = \sum_{\bfx\setminus x} \left( f(\bfx)
+  \prod_{y\in {\mathrm n}(f)\setminus \{x\}} \mu_{y\rightarrow f}(y)
+\right)
+\]
+
+If a variable has only one factor as a neighbor, it can initiate
+message propagation.\\[2ex]
+
+Once a variable has received all messages from its neighboring
+factor nodes we can compute the probability of that variable by
+multiplying all the messages and renormalising:
+\[
+p(x) \propto \prod_{h \in {\mathrm n}(x)}
+\mu_{h\rightarrow x} (x)
+\]
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Propagation in Factor Graphs}
+
+\centerline{\includegraphics[width=45mm]{factor4node}}
+
+initialise all messages to be 1\\
+
+an example schedule of messages resulting in computing $p(x_4)$:\\
+
+\begin{tabular}{ll}
+\hline message direction & message value \\ \hline
+$x_1 \rightarrow f_1$ & $1(x_1)$ \\
+$x_3 \rightarrow f_2$ & $1(x_3)$ \\
+$f_1 \rightarrow x_2$ & $\sum_{x_1} f_1(x_1,x_2) 1(x_1)$ \\
+$f_2 \rightarrow x_2$ & $\sum_{x_3} f_2(x_3,x_2) 1(x_3)$ \\
+$x_2 \rightarrow f_3$ & $\left( \sum_{x_1} f_1(x_1,x_2) \right)
+\left(\sum_{x_3} f_2(x_3,x_2) \right)$ \\ 
+$f_3 \rightarrow x_4$ & $\sum_{x_2} f_3(x_2,x_4) \left( \sum_{x_1}
+f_1(x_1,x_2) \right) \left(\sum_{x_3} f_2(x_3,x_2) \right)$ \\ \hline
+\end{tabular}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Propagation in Factor Graphs}
+
+\centerline{\includegraphics[width=45mm]{factor4node}}
+
+initialise all messages to be 1\\
+
+an example schedule of messages resulting in computing $p(x_4 | x_1 = a)$:\\
+
+\begin{tabular}{ll}
+\hline message direction & message value \\ \hline
+$x_1 \rightarrow f_1$ & $\Green{\delta(x_1 = a)}$ \\
+$x_3 \rightarrow f_2$ & $1(x_3)$ \\
+$f_1 \rightarrow x_2$ & $\sum_{x_1} f_1(x_1,x_2) \Green{\delta(x_1 =
+  a)} \,  = \,
+\Green{f_1(x_1 = a ,x_2)} $ \\
+$f_2 \rightarrow x_2$ & $\sum_{x_3} f_2(x_3,x_2) 1(x_3)$ \\
+$x_2 \rightarrow f_3$ & $ \Green{f_1(x_1=a,x_2)} 
+\left(\sum_{x_3} f_2(x_3,x_2) \right)$ \\ 
+$f_3 \rightarrow x_4$ & $\sum_{x_2} f_3(x_2,x_4) 
+\Green{f_1(x_1 = a,x_2)} \left(\sum_{x_3} f_2(x_3,x_2) \right)$ \\ \hline
+\end{tabular}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Elimination Rules for Factor Graphs}
+
+\begin{itemize}
+\item \Red{\bf eliminating observed variables}
+
+If a variable $x_i$ is {\bf observed}, i.e.\ its value is given, then
+it is a {\em constant} in all factor that include $x_i$.\\
+
+We can {\bf eliminate} $x_i$ from the graph by removing the
+corresponding node and modifying all neighboring factors to treat it
+as a constant.
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Elimination Rules for Factor Graphs}
+
+\vspace*{-2ex}
+\begin{itemize}
+\item \Red{\bf eliminating hidden variables}
+
+If a variable $x_i$ is {\bf hidden} and we are not interested in it we
+can eliminate it from the graph by summing over all its values. \\
+\begin{eqnarray*}
+\sum_{x_i} p(\bfx) & = & \frac{1}{Z} \sum_{x_i} \prod_{j}
+f_j(\bfx_{S_j}) \\
+&=& \frac{1}{Z} \prod_{j \notin {\mathrm n}(x_i)} 
+f_j(\bfx_{S_j}) \Blue{
+\left( \sum_{x_i} \prod_{k \in {\mathrm n}(x_i)}  f_k(\bfx_{S_k})
+\right)}\\
+&=& \frac{1}{Z} \prod_{j \notin {\mathrm n}(x_i)} 
+f_j(\bfx_{S_j}) \;\; \; \; \Blue{f_{\mathrm{new}}(\bfx_{S_{\mathrm{new}}})}
+\end{eqnarray*}
+where $
+f_{\mathrm{new}}(\bfx_{S_{\mathrm{new}}}) = \sum_{x_i} \prod_{k \in
+  {\mathrm n}(x_i)}  f_k(\bfx_{S_k})
+$
+and $\displaystyle S_{\mathrm{new}} = \bigcup_{k \in {\mathrm n}(x_i)}
+\!\! S_k \; \setminus \{i\}$. 
+
+This causes all its neighboring factor nodes to merge into one new
+factor node.
+\end{itemize}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Inference in Hidden markov models and \\
+Linear Gaussian state-space models}
+
+\centerline{\includegraphics[width=2.2in]{ssm}}
+
+\[
+p(X_{1, \ldots, T}, Y_{1, \ldots, T}) = p(X_1) p(Y_1|X_1) \prod_{t=2}^T
+\left[ p(X_t|X_{t-1}) p(Y_t|X_t) \right] 
+\]
+\begin{itemize}
+\item In HMMs, the states $X_t$ are discrete.
+\item In linear Gaussian SSMs, the states are real Gaussian vectors.
+\item Both HMMs and SSMs can be represented as singly connected DAGs.
+\item The \Blue{forward--backward algorithm} in hidden Markov models (HMMs),
+  and the \Blue{Kalman smoothing algorithm} in SSMs are both instances
+  of belief propagation / factor graph propagation. 
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Inference in multiply connected DAGs}
+
+\Blue{\bf The Junction Tree algorithm:} Form an undirected graph from your
+directed graph such that no additional conditional independence
+relationships have been created (this step is called
+``moralization'').  Lump variables in cliques together
+and form a tree of cliques---this may require a nasty step called
+``triangulation''.  Do inference in this tree of cliques.\\ 
+
+\Blue{\bf Cutset Conditioning:} or ``reasoning by assumptions''. Find a
+small set of variables which, if they were given (i.e.\ known) would
+render the remaining graph singly connected. For each value of these variables
+run belief propagation on the singly connected network. Average the
+resulting beliefs with the appropriate weights (given by normalizing
+constants).\\ 
+
+\Blue{\bf Loopy Belief Propagation:} just use BP although there are
+loops. In this case the terms ``upstream'' and ``downstream'' are not
+clearly defined. No guarantee of convergence, except for certain
+special graphs, but often works well in practice (c.f.\
+``turbo-decoding'' for error-correcting codes).
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Summary}
+
+\begin{itemize}
+\item inference consists of the problem of computing \Blue{$p(\mbox{variables
+    of interest}|\mbox{observed variables})$}
+\item for singly connected DAGs, \Blue{belief propagation} solves this
+  problem exactly. 
+\item for factor graphs, the analogous algorithm is \Blue{factor graph
+  propagation}.
+\item well-known algorithms such as Kalman smoothing and
+  forward-backward are special cases these general propagation
+  algorithms.
+\item for multiply connected graphs, the \Blue{junction tree algorithm}
+  solves the exact inference problem, but can be {\em very} slow
+  (exponential in the cardinality of the largest clique). 
+\item one approximate inference algorithm is \Blue{``loopy belief
+  propagation''}---we will see other approximate inference algorithms
+  in a later lecture.
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Belief Propagation in Directed Graphs}
+
+\vspace*{-2ex}
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=30mm]{bp}&\qquad \parbox[b]{45mm}{top-down
+  upstream evidence:\\(message $U_i$ sends to $X$)\\[0.2cm]
+\Green{$\pi_X(U_i) = p(U_i|e^+_{U_iX})$}\\[0.8cm]bottom-up downstream
+evidence:\\(message $Y_j$ sends to $X$)\\[0.3cm]
+\Blue{$\lambda_{Y_j}(X) = p(e^-_{XY_j}|X)$}{\vskip 0.1cm}}
+\end{tabular}
+}
+To update the probability of $X$ given the observed data:
+%
+\begin{equation*}
+\begin{split}
+\operatorname{BEL}(X) = p(X|e) \;=&\;\;\frac{1}{Z}\lambda(X) \, \pi(X)\\
+\lambda(X)\;=&\;\;\prod_j\lambda_{Y_j}(X)\\
+\pi(X)\;=&\;\;\sum_{U_1\cdots U_n}p(X|U_1,\ldots,U_n)\prod_i\pi_X(U_i)
+\end{split}
+\end{equation*}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Belief Propagation (cont.)}
+
+\vspace*{-2ex}
+\centerline{
+\begin{tabular}{cc}
+\includegraphics[width=30mm]{bp}&\qquad \parbox[b]{45mm}{top-down
+  upstream evidence:\\(message $U_i$ sends to $X$)\\[0.2cm]
+\Green{$\pi_X(U_i) = p(U_i|e^+_{U_iX})$}\\[0.8cm]bottom-up downstream
+evidence:\\(message $Y_j$ sends to $X$)\\[0.3cm]
+\Blue{$\lambda_{Y_j}(X) = p(e^-_{XY_j}|X)$}{\vskip 0.1cm}}
+\end{tabular}
+}
+Bottom-up propagation, message $X$ sends to $U_i$:
+%
+\begin{equation*}
+\lambda_X(U_i)\;=\;\sum_X\lambda(X)\sum_{U_k:k\neq i}p(X|U_1,\ldots,U_n)\prod_{k\neq i}\pi_X(U_k)
+\end{equation*}
+%
+Top-down propagation, message $X$ sends to $Y_j$:
+%
+\vspace*{-1.5ex}
+\begin{equation*}
+\pi_{Y_j}(X)\;=\;\frac{1}{Z}\big[\prod_{k\neq j}\lambda_{Y_k}(X)\big]\sum_{U_1\cdots U_n}p(X|U_1,\ldots,U_n)\prod_i\pi_X(U_i)\;=\;
+\frac{1}{Z}\frac{\operatorname{BEL}(X)}{\lambda_{Y_j}(X)}
+\end{equation*}
+$Z$ is the normaliser ensuring $\sum_X \pi_{Y_j}(X) =1$ \hfill \PineGreen{Demo?}
+
+% Fluffy and Moby Demo
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Understanding BP equations}
+
+\centerline{\includegraphics[width=22mm]{bp}}
+
+\begin{eqnarray}
+p(X|e)  = \operatorname{BEL}(X)\;=&\;\;\frac{1}{Z}\lambda(X)\pi(X) =
+p(e^-_X|X) p(X|e_X^+) \\
+p(e^-_X|X) = \lambda(X)\;=&\;\;\prod_j\lambda_{Y_j}(X) =
+\prod_j p(e^-_{XY_j}|X) \\
+p(X|e^+_X)  = \pi(X)\;=&\;\;\sum_{U_1\cdots
+  U_n}p(X|U_1,\ldots,U_n)\prod_i\pi_X(U_i)  \\
+=& \;\;\sum_{U_1\cdots
+  U_n}p(X|U_1,\ldots,U_n)\prod_i p(U_i|e^+_{U_iX}) 
+\end{eqnarray}
+$Z$ is a normalization constant.\\
+All equations follow from the conditional independencies in the
+graph. 
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: The Junction Tree Algorithm}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The Junction Tree Algorithm 1}
+
+\centerline{\includegraphics[scale=0.45]{jt1}}
+
+starting with a DAG...
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The Junction Tree Algorithm 2}
+
+\centerline{\includegraphics[scale=0.45]{jt2}}
+
+\Blue{\bf moralize} by marrying the parents of each node\\
+remove edge directions\\
+this results in an undirected graph with no additional C.I.\ relations
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The Junction Tree Algorithm 3}
+
+\centerline{\includegraphics[scale=0.45]{jt3}}
+
+\Blue{\bf triangulate} so that there is no loop of length $>$ 3 without a
+chord\\
+this is necessary so that the final junction tree satisfies the
+running intersection property
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The Junction Tree Algorithm 4}
+
+\vspace*{-3ex}
+\centerline{\includegraphics[scale=0.35]{jt4}}
+
+find cliques of the moralized, triangulated graph
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{The Junction Tree Algorithm 5}
+
+\centerline{\includegraphics[scale=0.25]{jt5}}
+
+\begin{itemize}
+\item form \Blue{\bf junction tree}: tree of (overlapping) sets of variables
+\item the \Blue{\bf running intersection property} means that if a variable
+  appears in more than one clique (e.g.\ $C$), it appears in all
+  intermediate cliques in the tree.
+\item the junction tree propagation algorithm ensures that neighboring
+cliques have consistent probability distribution
+\item local consistency $\rightarrow$ global consistency  
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{Appendix: Fluffy and Moby: A Belief Propagation Demo}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{1. Model Structure}
+
+\phantom{.} \hfill 
+\includegraphics[scale=0.450]{FluffyandMoby1}
+
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{2. Model Parameters}
+
+\phantom{.} \hfill 
+\includegraphics[scale=0.450]{FluffyandMoby2}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{3. Propagating Evidence}
+
+\phantom{.} \hfill 
+\includegraphics[scale=0.450]{FluffyandMoby3} 
+
+
+\vspace*{-5ex}
+\begin{enumerate}
+\item Observe \Red{``Moby is dead''}, i.e. $x_3 = 1$
+\vspace*{-2ex}
+\item Send $\lambda_{x_3}(x_1) \equiv p(e^-_{x_1 \rightarrow x_3}|x_1) = \vectr{0.1}{1.0}$  message $x_3
+  \rightarrow x_1$
+\vspace*{-2ex}
+\item $BEL(x_1|x_3=1) = \frac{1}{Z} \vectr{0.99}{0.01} \odot
+  \vectr{0.1}{1.0} = \vectr{0.91}{0.09}$ 
+\end{enumerate}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{4. Propagating Evidence}
+
+\phantom{.} \hfill \includegraphics[scale=0.450]{FluffyandMoby4}
+
+\vspace*{-8ex}
+\begin{enumerate}
+\addtocounter{enumi}{3}
+\item Send $\pi_{x_4}(x_1) \equiv p(x_1|e^+_{x_1 \rightarrow x_4}) =
+  \vectr{0.91}{0.09}$ 
+\vspace*{-2ex}
+\item Send $\pi_{x_4}(x_2) \equiv p(x_2|e^+_{x_2 \rightarrow x_4}) =
+  p(x_2) = \vectr{0.99}{0.01}$ from $x_2 \rightarrow x_4$.
+\vspace*{-2ex}
+\item Compute $\pi(x_4) \equiv p(x_4|e^+_{x_4}) = \sum_{x_1,x_2} p(x_4|x_1,x_2)
+  \pi_{x_4}(x_1)   \pi_{x_4}(x_2) = \vectr{0.18}{0.82}$
+\vspace*{-2ex}
+\item $BEL(x_4|x_3=1) = \vectr{0.18}{0.82}$, whereas before observing
+  $x_3=1$, $BEL(x_4) = \vectr{0.1}{0.9}$.
+\end{enumerate}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\frametitle{5. Propagating Evidence}
+
+\phantom{.} \hfill \includegraphics[scale=0.45]{FluffyandMoby5}
+
+\vspace*{-12ex}
+\begin{enumerate}
+\addtocounter{enumi}{7}
+\item Observe \Red{``Fluffy's Food Bowl is Full'' $x_6=1$ !}
+\vspace*{-2ex}
+\item  Send $\lambda_{x_6}(x_4) = \vectr{0.9}{0.1}$  message $x_6
+  \rightarrow x_4$
+\vspace*{-2ex}
+\item $BEL(x_4|x_3=1,x_6=1) = \frac{1}{Z} \vectr{0.18}{0.82} \odot
+  \vectr{0.9}{0.1} = \vectr{0.66}{0.34}$
+\vspace*{-2ex}
+\item  Send $\lambda_{x_4}(x_1) = \sum_{x_4}   \lambda_{x_6}(x_4) \sum_{x_2}
+  p(x_4|x_1,x_2) \pi_{x_4}(x_2) = \vectr{0.19}{0.82}$
+\vspace*{-2ex}
+\item $BEL(x_1|x_3=1,x_6=1)=\frac{1}{Z} \vectr{0.99}{0.01} \!\odot\!
+  \vectr{0.1}{1.0} \!\odot\! \vectr{0.19}{0.82} \!=\! \vectr{0.70}{0.30} \Rightarrow$
+   \Red{Fluffy still innocent!}
+\end{enumerate}
+
+\end{frame}
+\end{document}
